@@ -56,8 +56,7 @@ cp .env.example .env
 
 | Variável | Para quê | Padrão |
 |---|---|---|
-| `OPENAI_API_KEY` ou `GOOGLE_API_KEY` | chave do provedor | — |
-| `RANGOJA_PROVEDOR` | `openai` ou `gemini` | `openai` se houver chave OpenAI |
+| `OPENAI_API_KEY` | chave da OpenAI | — |
 | `RANGOJA_MODO` | `replay`, `live` ou `record` | `replay` |
 | `RANGOJA_MODELO`, `_FALLBACK`, `_JUIZ` | modelos usados | `gpt-4o-mini`, `gpt-4.1-mini`, `gpt-4o` |
 | `RANGOJA_REPETICOES` | repetições dos testes estatísticos | `5` |

@@ -36,7 +36,6 @@ def preparar_ambiente() -> None:
     obs = observabilidade.ligar()
     info = {
         "modo": config.modo(),
-        "provedor": config.provedor(),
         "modelo": config.modelo_primario(),
         "chave de API": "sim" if config.chave_disponivel() else "não (use replay)",
         "observabilidade": obs,

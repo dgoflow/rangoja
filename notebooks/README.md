@@ -148,7 +148,7 @@ Em `replay`, todo notebook roda do início ao fim sem chave e gera traces no Pho
 real são marcadas `# requer: live` e, em `replay`, exibem o resultado gravado.
 
 **Pilha do modelo** (abaixo dos callbacks, então guardrails sempre rodam), de fora para
-dentro: `fallback → retry → injeção de falhas → fonte (cache | gravação | roteiro | Gemini)`.
+dentro: `fallback → retry → injeção de falhas → fonte (cache | gravação | roteiro | modelo ao vivo)`.
 
 ## Convenções
 

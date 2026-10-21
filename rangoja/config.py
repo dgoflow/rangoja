@@ -25,34 +25,20 @@ def modo() -> str:
     return valor
 
 
-def provedor() -> str:
-    """openai ou gemini. Padrão: openai se houver OPENAI_API_KEY, senão gemini."""
-    escolhido = os.getenv("RANGOJA_PROVEDOR", "").strip().lower()
-    if escolhido:
-        return escolhido
-    return "openai" if os.getenv("OPENAI_API_KEY") else "gemini"
-
-
 def chave_disponivel() -> bool:
-    return bool(os.getenv("OPENAI_API_KEY") if provedor() == "openai" else os.getenv("GOOGLE_API_KEY"))
-
-
-_MODELOS_PADRAO = {
-    "openai": {"primario": "gpt-4o-mini", "fallback": "gpt-4.1-mini", "juiz": "gpt-4o"},
-    "gemini": {"primario": "gemini-2.5-flash", "fallback": "gemini-2.5-flash-lite", "juiz": "gemini-2.5-pro"},
-}
+    return bool(os.getenv("OPENAI_API_KEY"))
 
 
 def modelo_primario() -> str:
-    return os.getenv("RANGOJA_MODELO", _MODELOS_PADRAO[provedor()]["primario"])
+    return os.getenv("RANGOJA_MODELO", "gpt-4o-mini")
 
 
 def modelo_fallback() -> str:
-    return os.getenv("RANGOJA_MODELO_FALLBACK", _MODELOS_PADRAO[provedor()]["fallback"])
+    return os.getenv("RANGOJA_MODELO_FALLBACK", "gpt-4.1-mini")
 
 
 def modelo_juiz() -> str:
-    return os.getenv("RANGOJA_MODELO_JUIZ", _MODELOS_PADRAO[provedor()]["juiz"])
+    return os.getenv("RANGOJA_MODELO_JUIZ", "gpt-4o")
 
 
 def repeticoes() -> int:

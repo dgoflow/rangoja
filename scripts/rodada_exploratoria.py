@@ -77,7 +77,7 @@ def main() -> None:
         print(linha)
     destino = config.RAIZ / "rangoja" / "gravacoes" / "RELATORIO.md"
     destino.parent.mkdir(parents=True, exist_ok=True)
-    destino.write_text("# Rodada exploratória\n\nModelo: " + config.modelo_primario() + " (" + config.provedor() + ")\n\n" + "\n".join(linhas) + "\n", encoding="utf-8")
+    destino.write_text("# Rodada exploratória\n\nModelo: " + config.modelo_primario() + "\n\n" + "\n".join(linhas) + "\n", encoding="utf-8")
     print(f"relatório em {destino}")
 
 

@@ -1,6 +1,6 @@
 """ModeloRangoja: a pilha do modelo, abaixo de todos os callbacks do ADK.
 
-    fallback → retry → injeção de falhas → fonte (roteiro | gravação | cache | Gemini)
+    fallback → retry → injeção de falhas → fonte (roteiro | gravação | cache | modelo ao vivo)
 
 Como fica abaixo dos callbacks, guardrails, categorias e limites rodam em qualquer modo.
 """
@@ -100,7 +100,7 @@ async def _fonte_interna(modelo: ModeloRangoja, requisicao: Any) -> LlmResponse:
             "Rode em modo record para gerar o cache."
         )
 
-    resposta = await _gemini(modelo, requisicao)
+    resposta = await _ao_vivo(modelo, requisicao)
     ctx.fontes.append("live")
     if ctx.modo == "record":
         caminho.parent.mkdir(parents=True, exist_ok=True)
@@ -108,20 +108,14 @@ async def _fonte_interna(modelo: ModeloRangoja, requisicao: Any) -> LlmResponse:
     return resposta
 
 
-async def _gemini(modelo: ModeloRangoja, requisicao: Any) -> LlmResponse:
-    """Caminho ao vivo. Provedor escolhido em config.provedor(): openai (via LiteLlm do ADK)
-    ou gemini (API direta). Não exercitado nos testes replay; ver IMPLEMENTACAO.md."""
+async def _ao_vivo(modelo: ModeloRangoja, requisicao: Any) -> LlmResponse:
+    """Caminho ao vivo: OpenAI via LiteLlm do ADK. Não exercitado nos testes replay; ver IMPLEMENTACAO.md."""
     nome = {"primario": config.modelo_primario(), "secundario": config.modelo_fallback()}.get(
         modelo.papel, config.modelo_juiz()
     )
-    if config.provedor() == "openai":
-        from google.adk.models.lite_llm import LiteLlm
-        ia = LiteLlm(model=f"openai/{nome}")
-        requisicao.model = f"openai/{nome}"  # o LiteLlm usa o modelo da requisição, não o seu
-    else:
-        from google.adk.models.google_llm import Gemini
-        ia = Gemini(model=nome)
-        requisicao.model = nome
+    from google.adk.models.lite_llm import LiteLlm
+    ia = LiteLlm(model=f"openai/{nome}")
+    requisicao.model = f"openai/{nome}"  # o LiteLlm usa o modelo da requisição, não o seu
     final = await _uma_chamada(ia, requisicao)
     # O ADK entrega a saída estruturada por uma ferramenta (`set_model_response`). Se o modelo
     # responde em prosa em vez de chamá-la, pede de novo (até 2 vezes) em vez de quebrar o fluxo.

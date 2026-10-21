@@ -6,7 +6,7 @@ implementado, o que falta, o que foi medido com o modelo real e os desvios da sp
 ## Implementado
 
 - **Dados e domínio:** 12 pedidos, 9 clientes, 2 entregadores, política em markdown, 20 casos (`casos.yaml`); `tipos`, `politica`, `armazem` (SQLite), 10 ferramentas com efeito real.
-- **Pilha do modelo** (`modelo/`): fallback → retry → injeção de falhas → fonte (roteiro, gravação nomeada, cache, modelo ao vivo). Provedor OpenAI via `LiteLlm` do ADK (ou Gemini). Modos `replay`, `live`, `record`.
+- **Pilha do modelo** (`modelo/`): fallback → retry → injeção de falhas → fonte (roteiro, gravação nomeada, cache, modelo ao vivo). Provedor OpenAI via `LiteLlm` do ADK. Modos `replay`, `live`, `record`.
 - **Controle e resiliência** (`controle.py`): guardrails de entrada e saída, categorias, consulta determinística, contrato, golpe, recorrência, limites, erros estruturados.
 - **Componentes e versões** (`agentes.py`, `versoes.py`): 19 componentes com dependências; `montar`, `sem`/`com`, `resolver`; v0–v3.
 - **Execução** (`execucao.py`): `atender`, `continuar`, `aprovar`, `recusar`, `expirar_pendencias`, `reiniciar_runner`, `estado_persistido`.

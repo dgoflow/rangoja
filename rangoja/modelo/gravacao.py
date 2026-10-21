@@ -16,7 +16,7 @@ from . import contexto
 def salvar(nome: str, ctx: contexto.Contexto, **metadados) -> Path | None:
     """Grava `gravacoes/<nome>.json` a partir das respostas da execução. None se não for gravável."""
     corpo = contexto.para_gravacao(
-        ctx, nome=nome, modelo=config.modelo_primario(), provedor=config.provedor(),
+        ctx, nome=nome, modelo=config.modelo_primario(), provedor="openai",
         gravada_em=datetime.now(timezone.utc).isoformat(timespec="seconds"), **metadados,
     )
     if corpo is None:
