@@ -1,0 +1,52 @@
+{
+  "versao": "v3",
+  "caso": "C02-70",
+  "status": "concluido",
+  "erro": null,
+  "decisao": {
+    "categoria": "atraso",
+    "problemas": [
+      "atraso"
+    ],
+    "solucao": "reembolso",
+    "valor": null,
+    "pedido_id": "5310",
+    "justificativa": "O pedido chegou com um atraso de 70 minutos e o reembolso da taxa de entrega já foi registrado.",
+    "sinais_de_risco": [],
+    "mensagem_ao_cliente": "Seu reembolso da taxa de entrega no valor de R$ 7,00 foi processado devido ao atraso na entrega do pedido."
+  },
+  "resposta": "Olá! \n\nPedimos desculpas pelo atraso de 70 minutos no seu pedido 5310. Para compensar, informamos que seu reembolso da taxa de entrega no valor de R$ 7,00 já foi processado. \n\nAgradecemos pela sua compreensão e estamos à disposição para qualquer outra dúvida!\n\nAtenciosamente,  \n[Nome da Empresa]",
+  "trajetoria": [
+    {
+      "agente": "resolucao",
+      "ferramenta": "buscar_pedido",
+      "args": {
+        "pedido_id": "5310"
+      },
+      "efetiva": true
+    },
+    {
+      "agente": "resolucao",
+      "ferramenta": "registrar_reembolso",
+      "args": {
+        "pedido_id": "5310",
+        "valor": 7,
+        "motivo": "atraso"
+      },
+      "efetiva": true
+    }
+  ],
+  "fontes": [
+    "live",
+    "live",
+    "live",
+    "live",
+    "live"
+  ],
+  "reprovados": {
+    "solucoes_permitidas": "solução 'reembolso' fora de ['voucher']",
+    "valor": "sem valor decidido; esperado 10.0",
+    "ferramentas_obrigatorias": "ferramentas não chamadas: ['oferecer_cupom']",
+    "ferramentas_proibidas": "ferramentas proibidas chamadas com efeito: ['registrar_reembolso']"
+  }
+}

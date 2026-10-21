@@ -1,0 +1,14 @@
+{
+  "301": {
+    "entregador_id": "301",
+    "nome_completo": "Ricardo Fictício Souza",
+    "telefone": "(00) 90000-1111",
+    "placa": "ABC1D23"
+  },
+  "302": {
+    "entregador_id": "302",
+    "nome_completo": "Marta Exemplo Lima",
+    "telefone": "(00) 90000-2222",
+    "placa": "XYZ9K87"
+  }
+}

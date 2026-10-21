@@ -1,0 +1,49 @@
+{
+  "nome": "N1.2/correcao",
+  "modelo": "gpt-4o-mini",
+  "provedor": "openai",
+  "gravada_em": "2026-10-21T00:41:15+00:00",
+  "secao": "N1.2",
+  "versao": "v0+ferramentas",
+  "caso": "C01",
+  "amostra": {
+    "criterio": "consultou",
+    "tentativas": 6,
+    "satisfizeram": 0
+  },
+  "respostas": {
+    "unico": [
+      {
+        "partes": [
+          {
+            "chamada": "registrar_reembolso",
+            "args": {
+              "pedido_id": "4821",
+              "valor": 0,
+              "motivo": "item_faltando"
+            }
+          },
+          {
+            "chamada": "oferecer_cupom",
+            "args": {
+              "pedido_id": "4821",
+              "valor": 15,
+              "motivo": "qualidade"
+            }
+          }
+        ]
+      },
+      {
+        "chamada": "registrar_reembolso",
+        "args": {
+          "pedido_id": "4821",
+          "valor": 50,
+          "motivo": "item_faltando"
+        }
+      },
+      {
+        "texto": "**Categoria:** item_faltando e qualidade  \n**Solução:** \n\n- O reembolso de R$ 50,00 pelo refrigerante que faltou já foi registrado.\n- Oferecemos um cupom de desconto de R$ 15,00 pela qualidade do pedido.\n\n**Mensagem ao cliente:**  \nSeu pedido chegou frio e faltou um refrigerante. O reembolso de R$ 50,00 pelo item faltante foi registrado. Além disso, você receberá um cupom de desconto de R$ 15,00 para sua próxima compra. Agradecemos pela compreensão!"
+      }
+    ]
+  }
+}

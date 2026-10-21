@@ -1,0 +1,43 @@
+{
+  "nome": "N1.4/falha",
+  "modelo": "gpt-4o-mini",
+  "provedor": "openai",
+  "gravada_em": "2026-10-21T00:34:06+00:00",
+  "secao": "N1.4",
+  "versao": "v0+ferramentas",
+  "caso": "C02",
+  "amostra": null,
+  "respostas": {
+    "unico": [
+      {
+        "chamada": "buscar_pedido",
+        "args": {
+          "pedido_id": "5310"
+        }
+      },
+      {
+        "partes": [
+          {
+            "chamada": "oferecer_cupom",
+            "args": {
+              "pedido_id": "5310",
+              "valor": 10,
+              "motivo": "atraso de entrega"
+            }
+          },
+          {
+            "chamada": "registrar_reembolso",
+            "args": {
+              "pedido_id": "5310",
+              "valor": 7,
+              "motivo": "atraso"
+            }
+          }
+        ]
+      },
+      {
+        "texto": "**Categoria:** atraso  \n**Solução:** reembolso da taxa de entrega e voucher de R$ 10.\n\n**Mensagem ao cliente:**\nPedimos desculpas pelo atraso na entrega do seu pedido 5310, que chegou com 70 minutos de atraso. Registramos o reembolso da taxa de entrega de R$ 7, e você receberá um voucher de R$ 10 como compensação. Obrigado pela compreensão!"
+      }
+    ]
+  }
+}

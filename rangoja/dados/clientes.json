@@ -1,0 +1,72 @@
+[
+  {
+    "cliente_id": "101",
+    "nome": "Cliente Exemplo Um",
+    "reembolsos": [],
+    "preferencias": {}
+  },
+  {
+    "cliente_id": "103",
+    "nome": "Cliente Exemplo Três",
+    "reembolsos": [],
+    "preferencias": {}
+  },
+  {
+    "cliente_id": "104",
+    "nome": "Cliente Exemplo Quatro",
+    "reembolsos": [],
+    "preferencias": {}
+  },
+  {
+    "cliente_id": "105",
+    "nome": "Cliente Exemplo Cinco",
+    "reembolsos": [],
+    "preferencias": {}
+  },
+  {
+    "cliente_id": "106",
+    "nome": "Cliente Exemplo Seis",
+    "reembolsos": [],
+    "preferencias": {}
+  },
+  {
+    "cliente_id": "107",
+    "nome": "Cliente Recorrente",
+    "reembolsos": [
+      {
+        "pedido_id": "3001",
+        "valor": 12.0,
+        "quando": "2026-11-05T12:00:00-03:00"
+      },
+      {
+        "pedido_id": "3002",
+        "valor": 15.0,
+        "quando": "2026-10-29T12:00:00-03:00"
+      },
+      {
+        "pedido_id": "3003",
+        "valor": 9.0,
+        "quando": "2026-10-21T12:00:00-03:00"
+      }
+    ],
+    "preferencias": {}
+  },
+  {
+    "cliente_id": "108",
+    "nome": "Cliente Exemplo Oito",
+    "reembolsos": [],
+    "preferencias": {}
+  },
+  {
+    "cliente_id": "109",
+    "nome": "Cliente Exemplo Nove",
+    "reembolsos": [],
+    "preferencias": {}
+  },
+  {
+    "cliente_id": "113",
+    "nome": "Cliente Exemplo Treze",
+    "reembolsos": [],
+    "preferencias": {}
+  }
+]

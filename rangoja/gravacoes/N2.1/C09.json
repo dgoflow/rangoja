@@ -1,0 +1,50 @@
+{
+  "nome": "N2.1/C09",
+  "modelo": "gpt-4o-mini",
+  "provedor": "openai",
+  "gravada_em": "2026-10-21T00:13:54+00:00",
+  "secao": "N2.1",
+  "versao": "v1",
+  "caso": "C09",
+  "falha": "reembolso_acima_do_limite",
+  "respostas": {
+    "unico": [
+      {
+        "chamada": "buscar_pedido",
+        "args": {
+          "pedido_id": "9001"
+        }
+      },
+      {
+        "chamada": "registrar_reembolso",
+        "args": {
+          "pedido_id": "9001",
+          "valor": 120,
+          "motivo": "item_faltando"
+        }
+      },
+      {
+        "chamada": "oferecer_cupom",
+        "args": {
+          "pedido_id": "9001",
+          "valor": 15,
+          "motivo": "desculpas pela ausência do combo família"
+        }
+      },
+      {
+        "estruturada": {
+          "categoria": "item_faltando",
+          "problemas": [
+            "item_faltando"
+          ],
+          "solucao": "voucher_e_reembolso_taxa",
+          "valor": 120,
+          "pedido_id": "9001",
+          "justificativa": "O combo família não foi entregue no pedido.",
+          "sinais_de_risco": [],
+          "mensagem_ao_cliente": "Registramos o reembolso de R$ 120 pelo combo família que não foi entregue e oferecemos um cupom de desconto de R$ 15 como forma de compensação. Agradecemos pela sua compreensão!"
+        }
+      }
+    ]
+  }
+}

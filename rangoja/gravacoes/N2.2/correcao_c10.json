@@ -1,0 +1,11 @@
+{
+  "nome": "N2.2/correcao_c10",
+  "modelo": "gpt-4o-mini",
+  "provedor": "openai",
+  "gravada_em": "2026-10-21T00:39:11+00:00",
+  "secao": "N2.2",
+  "versao": "v1+aprovacao+guardrail_entrada",
+  "caso": "C10",
+  "amostra": null,
+  "respostas": {}
+}

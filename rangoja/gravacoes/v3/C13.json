@@ -1,0 +1,17 @@
+{
+  "versao": "v3",
+  "caso": "C13",
+  "status": "aguardando_cliente",
+  "erro": null,
+  "decisao": null,
+  "resposta": "Para resolver isso, preciso do número do pedido. Pode me informar?",
+  "trajetoria": [],
+  "fontes": [
+    "live",
+    "live",
+    "live",
+    "live",
+    "live"
+  ],
+  "reprovados": {}
+}

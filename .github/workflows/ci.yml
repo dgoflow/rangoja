@@ -1,0 +1,33 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RANGOJA_MODO: replay        # sem chave e sem rede: tudo vem de gravações e roteiros
+      RANGOJA_PHOENIX: "off"      # o Phoenix é opcional; o CI não o instala
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Instalar
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,live]"
+          pip install ipykernel
+          python -m ipykernel install --user --name rangoja
+      - name: Lint
+        run: ruff check .
+      - name: Gravações em dia
+        run: python scripts/verificar_gravacoes.py
+      - name: Testes (v3, sem testes live)
+        run: pytest tests/ -m "not live" -q
+      - name: Notebooks (replay)
+        run: pytest --nbmake --nbmake-kernel=rangoja -q notebooks/0*.ipynb notebooks/extras/x[123]*.ipynb

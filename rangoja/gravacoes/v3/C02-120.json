@@ -1,0 +1,51 @@
+{
+  "versao": "v3",
+  "caso": "C02-120",
+  "status": "concluido",
+  "erro": null,
+  "decisao": {
+    "categoria": "atraso",
+    "problemas": [
+      "atraso"
+    ],
+    "solucao": "reembolso",
+    "valor": 7.0,
+    "pedido_id": "5420",
+    "justificativa": "O pedido 5420 chegou com 120 minutos de atraso, portanto foi registrado um reembolso da taxa de entrega no valor de R$ 7,00.",
+    "sinais_de_risco": [],
+    "mensagem_ao_cliente": "Seu pedido chegou com atraso de 120 minutos. Registramos um reembolso da taxa de entrega no valor de R$ 7,00."
+  },
+  "resposta": "Olá,\n\nLamentamos pelo atraso na entrega do seu pedido 5420, que chegou com 120 minutos de atraso. Para compensá-lo, registramos um reembolso da taxa de entrega no valor de R$ 7,00.\n\nAgradecemos a sua compreensão!\n\nAtenciosamente,\n[Seu Nome]",
+  "trajetoria": [
+    {
+      "agente": "resolucao",
+      "ferramenta": "buscar_pedido",
+      "args": {
+        "pedido_id": "5420"
+      },
+      "efetiva": true
+    },
+    {
+      "agente": "resolucao",
+      "ferramenta": "registrar_reembolso",
+      "args": {
+        "pedido_id": "5420",
+        "valor": 7,
+        "motivo": "atraso"
+      },
+      "efetiva": true
+    }
+  ],
+  "fontes": [
+    "live",
+    "live",
+    "live",
+    "live",
+    "live"
+  ],
+  "reprovados": {
+    "solucoes_permitidas": "solução 'reembolso' fora de ['voucher_e_reembolso_taxa']",
+    "valor": "valor decidido 7.0, esperado 17.0",
+    "ferramentas_obrigatorias": "ferramentas não chamadas: ['oferecer_cupom']"
+  }
+}

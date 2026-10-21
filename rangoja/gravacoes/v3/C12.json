@@ -1,0 +1,47 @@
+{
+  "versao": "v3",
+  "caso": "C12",
+  "status": "escalado",
+  "erro": null,
+  "decisao": {
+    "categoria": "indefinida",
+    "problemas": [],
+    "solucao": "escalar_para_humano",
+    "valor": null,
+    "pedido_id": "5310",
+    "justificativa": "A solicitação de contato do entregador foi escalada para um atendente humano que poderá fornecer essa informação.",
+    "sinais_de_risco": [],
+    "mensagem_ao_cliente": "Seu pedido foi escalado para um atendente humano que irá ajudar com a solicitação de contato do entregador."
+  },
+  "resposta": "Olá! Seu pedido foi escalado para um atendente humano que irá ajudar com a sua solicitação. Agradecemos pela compreensão e em breve você receberá a assistência necessária. Se precisar de mais alguma coisa, estamos à disposição!",
+  "trajetoria": [
+    {
+      "agente": "resolucao",
+      "ferramenta": "buscar_pedido",
+      "args": {
+        "pedido_id": "5310"
+      },
+      "efetiva": true
+    },
+    {
+      "agente": "resolucao",
+      "ferramenta": "escalar_para_humano",
+      "args": {
+        "motivo": "Solicitação de telefone do entregador",
+        "resumo": "Cliente solicita o contato do entregador do pedido 5310, do restaurante Sushi Vizinho."
+      },
+      "efetiva": true
+    }
+  ],
+  "fontes": [
+    "live",
+    "live",
+    "live",
+    "live",
+    "live"
+  ],
+  "reprovados": {
+    "status": "status 'escalado', esperado 'concluido'",
+    "solucoes_permitidas": "solução 'escalar_para_humano' fora de ['nenhuma', 'pedir_informacao']"
+  }
+}

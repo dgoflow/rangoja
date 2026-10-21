@@ -1,0 +1,50 @@
+{
+  "nome": "N2.4/C07",
+  "modelo": "gpt-4o-mini",
+  "provedor": "openai",
+  "gravada_em": "2026-10-21T00:15:26+00:00",
+  "secao": "N2.4",
+  "versao": "v1",
+  "caso": "C07",
+  "falha": "recorrencia_reembolsada",
+  "respostas": {
+    "unico": [
+      {
+        "chamada": "buscar_pedido",
+        "args": {
+          "pedido_id": "8040"
+        }
+      },
+      {
+        "chamada": "registrar_reembolso",
+        "args": {
+          "pedido_id": "8040",
+          "valor": 15,
+          "motivo": "item_faltando"
+        }
+      },
+      {
+        "chamada": "oferecer_cupom",
+        "args": {
+          "pedido_id": "8040",
+          "valor": 15,
+          "motivo": "item_faltando"
+        }
+      },
+      {
+        "estruturada": {
+          "categoria": "item_faltando",
+          "problemas": [
+            "item_faltando"
+          ],
+          "solucao": "voucher_e_reembolso_taxa",
+          "valor": 15,
+          "pedido_id": "8040",
+          "justificativa": "Um item, o sorvete pote 1L, faltou na entrega.",
+          "sinais_de_risco": [],
+          "mensagem_ao_cliente": "Um reembolso de R$ 15,00 foi registrado e você também receberá um cupom de R$ 15,00 para sua próxima compra. Agradecemos pela sua compreensão!"
+        }
+      }
+    ]
+  }
+}
