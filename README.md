@@ -59,3 +59,7 @@ specs/        especificação do pacote
 
 O que foi medido com o modelo real, o que é roteiro e o que não foi implementado estão em
 [IMPLEMENTACAO.md](IMPLEMENTACAO.md). Os resultados com modelo real variam entre execuções.
+
+## Licença
+
+[MIT](LICENSE).
