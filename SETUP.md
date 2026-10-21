@@ -64,6 +64,14 @@ cp .env.example .env
 | `RANGOJA_LIMIAR_ESTABILIDADE` | taxa mínima de acerto | `0.8` |
 | `RANGOJA_PHOENIX` | `off` desliga o Phoenix | `on` |
 
+Para rodar os testes com o modelo real (estabilidade da trajetória e relações metamórficas), é preciso a chave no `.env` **e** o modo `live`; sem os dois, eles aparecem como `s` (pulados) e `-rs` mostra o motivo:
+
+```bash
+RANGOJA_MODO=live pytest tests -m live -rs
+```
+
+Cada teste repete os casos várias vezes (`RANGOJA_REPETICOES`, padrão 5) e **custa tokens**. Com o modelo real o resultado varia entre execuções, e um teste de estabilidade pode falhar sem que haja um defeito novo.
+
 Em `live`, as células de falha continuam usando a gravação (para a lição aparecer sempre);
 passe `gravacao=None` a `atender` para ver o modelo de verdade. Em `record`, as respostas novas
 são salvas em `rangoja/gravacoes/`. **Isso custa tokens.** `.env` fica fora do git.
