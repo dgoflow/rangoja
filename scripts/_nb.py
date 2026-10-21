@@ -18,6 +18,10 @@ from rangoja.trajetoria import chamou, ferramenta_antes, contar_chamadas
 from rangoja.versoes import v0, v1, v2, v3, montar
 preparar_ambiente()'''
 
+AVISO = ("> ▶ **Comece por aqui:** execute a célula de código abaixo **uma vez**, antes de qualquer seção. "
+         "Ela importa tudo que os exemplos usam (`atender`, `verificar`, …). Depois disso, cada seção roda sozinha, na ordem que você quiser.")
+COMENTARIO = "# Execute esta célula primeiro: ela importa o que todas as seções usam.\n"
+
 
 def md(texto: str):
     return nbf.v4.new_markdown_cell(texto.strip())
@@ -28,12 +32,22 @@ def code(texto: str):
 
 
 def setup():
-    return code(SETUP)
+    return code(COMENTARIO + SETUP)
+
+
+def com_aviso(celulas: list) -> list:
+    """Põe o aviso de 'execute primeiro' antes da célula de preparação."""
+    saida = []
+    for c in celulas:
+        if c.cell_type == "code" and c.source.startswith(COMENTARIO):
+            saida.append(md(AVISO))
+        saida.append(c)
+    return saida
 
 
 def salvar(nome: str, celulas: list) -> Path:
     nb = nbf.v4.new_notebook()
-    nb.cells = celulas
+    nb.cells = com_aviso(celulas)
     nb.metadata["kernelspec"] = {"display_name": "Python 3", "language": "python", "name": "python3"}
     caminho = PASTA / nome
     caminho.parent.mkdir(parents=True, exist_ok=True)

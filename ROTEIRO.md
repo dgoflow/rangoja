@@ -25,6 +25,8 @@ O NB04 fecha o arco: como provar, com testes, que cada versão se comporta como 
 um **caso** do RangoJá (`C09`, `C05`, …), a **falha** acontecendo, a **correção** e uma **verificação** que
 confirma o que você acabou de ver. A descrição do problema e da solução está nos próprios notebooks, em texto.
 
+Cada notebook começa com uma **célula de preparação**: execute-a uma vez; depois, qualquer seção roda sozinha.
+
 Você vai encontrar sempre as mesmas peças, que ligam o notebook à implementação em ADK:
 
 | No notebook | O que faz |

@@ -31,7 +31,7 @@ uv pip install -e ".[observabilidade]"
 jupyter lab notebooks/00_ambiente.ipynb
 ```
 
-Escolha o kernel **rangoja** e execute tudo. A tabela da primeira célula mostra modo, modelo,
+Escolha o kernel **rangoja** e execute tudo, de cima para baixo. Em qualquer notebook, a primeira célula de código é a **preparação**: execute-a uma vez antes de rodar qualquer seção isolada (sem ela aparece `NameError: name 'verificar' is not defined`). A tabela da primeira célula mostra modo, modelo,
 chave e Phoenix. Se `RANGOJA_MODO` aparecer como `replay`, está tudo certo.
 
 Cada seção dos notebooks abre com `preparar_secao("N2.3")` e roda sozinha: você pode pular
