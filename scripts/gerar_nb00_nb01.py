@@ -94,20 +94,18 @@ runner = Runner(app_name="rangoja", agent=agente, session_service=InMemorySessio
 sessao = await runner.session_service.create_session(app_name="rangoja", user_id="101")
 pergunta = types.Content(role="user", parts=[types.Part(text=mensagem)])
 
-chamadas, resposta_v0 = [], None
 async for evento in runner.run_async(user_id="101", session_id=sessao.id, new_message=pergunta):
     for parte in (evento.content.parts if evento.content else []):
         if parte.function_call:
-            chamadas.append(parte.function_call.name)
             print(f"[{evento.author}] chama {parte.function_call.name}({dict(parte.function_call.args)})")
         if parte.text:
-            resposta_v0 = parte.text
             print(f"[{evento.author}] {parte.text}")'''),
         md("**Parece certo, e é esse o problema.** A resposta segue a política (voucher de até R$ 15 por qualidade, reembolso do item que faltou). "
-           "Mas o agente acreditou no cliente sem olhar o pedido, não registrou reembolso nenhum, e a resposta não diz quanto: o código não tem o que executar."),
-        code('''verificar(not chamadas, "nenhuma ferramenta chamada: o agente não consultou o pedido nem registrou o reembolso")
-verificar(agente.output_schema is None, "a saída é só texto: não há decisão (categoria, valor) que o código possa ler")
-print("a resposta cita um valor de reembolso?", "R$ 8" in (resposta_v0 or ""))'''),
+           "Mas olhe o que aconteceu de fato:\n\n"
+           "- **Nada foi consultado.** O agente acreditou no cliente: não tinha como saber se o refrigerante faltou mesmo, nem quanto custava.\n"
+           "- **Nada foi feito.** O cliente leu \"reembolso\", mas não existe reembolso no sistema: o agente tem zero ferramentas. Ao vivo, o modelo às vezes ainda diz que está \"processando\".\n"
+           "- **O código não tem o que executar.** A saída é texto: não há categoria nem valor que um sistema possa ler e cumprir.\n\n"
+           "Funciona na demo. Não funciona em produção."),
         md("Daqui em diante usamos um **atalho**. `atender(v0, caso)` monta este mesmo agente e roda este mesmo `Runner`; "
            "`preparar_secao` escolhe o caso, a versão e a gravação de cada seção e começa com um armazém limpo."),
         code('''s = preparar_secao("N1.1")
