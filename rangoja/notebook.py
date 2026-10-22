@@ -71,9 +71,10 @@ def modelo(replay: str | None = None, agente: str = "unico") -> ModeloRangoja:
 
     Em modo replay, devolve a gravação `replay` (o que o modelo real respondeu), sem rede e sem chave.
     `agente` precisa ser o `name` do LlmAgent: a gravação guarda as respostas por agente.
+    Independe das seções: não usa a gravação que `atender()` deixou no contexto e pode rodar de novo.
     """
     gravacao = Roteiro.de_arquivo(config.GRAVACOES / f"{replay}.json") if replay else None
-    return ModeloRangoja(agente=agente, replay=gravacao)
+    return ModeloRangoja(agente=agente, avulso=True, replay=gravacao)
 
 
 def preparar_secao(secao_id: str) -> Secao:

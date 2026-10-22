@@ -17,7 +17,7 @@ from pydantic import ConfigDict
 
 from .. import config, falhas, relogio
 from . import contexto
-from .roteiro import para_resposta
+from .roteiro import RoteiroEsgotado, para_resposta
 
 
 class RespostaAusente(Exception):
@@ -41,7 +41,8 @@ class ModeloRangoja(BaseLlm):
     papel: str = "primario"          # primario | secundario | juiz
     retry: bool = False
     fallback: Any = None             # ModeloRangoja | None
-    replay: Any = None               # Roteiro | None: resposta gravada usada só em modo replay
+    avulso: bool = False             # agente montado à mão: ignora roteiro e gravação do contexto de atender()
+    replay: Any = None               # Roteiro | None: só para o avulso, resposta gravada usada em modo replay
 
     async def generate_content_async(  # type: ignore[override]
         self, llm_request: Any, stream: bool = False
@@ -81,19 +82,24 @@ async def _fonte(modelo: ModeloRangoja, requisicao: Any) -> LlmResponse:
 
 async def _fonte_interna(modelo: ModeloRangoja, requisicao: Any) -> LlmResponse:
     ctx = contexto.atual()
-    for nome, origem in (("roteiro", ctx.roteiro), ("gravacao", ctx.gravacao)):
-        if origem is None:
-            continue
-        passo = origem.proximo(modelo.agente, requisicao)
-        if passo is not None:
-            ctx.fontes.append(nome)
-            return para_resposta(passo, requisicao)
-
-    if modelo.replay is not None and config.modo() == "replay":
-        passo = modelo.replay.proximo(modelo.agente, requisicao)
-        if passo is not None:
-            ctx.fontes.append("gravacao")
-            return para_resposta(passo, requisicao)
+    if modelo.avulso:
+        if modelo.replay is not None and config.modo() == "replay":
+            try:
+                passo = modelo.replay.proximo(modelo.agente, requisicao)
+            except RoteiroEsgotado:  # a célula rodou de novo: recomeça a gravação
+                modelo.replay._cursor.clear()
+                passo = modelo.replay.proximo(modelo.agente, requisicao)
+            if passo is not None:
+                ctx.fontes.append("gravacao")
+                return para_resposta(passo, requisicao)
+    else:
+        for nome, origem in (("roteiro", ctx.roteiro), ("gravacao", ctx.gravacao)):
+            if origem is None:
+                continue
+            passo = origem.proximo(modelo.agente, requisicao)
+            if passo is not None:
+                ctx.fontes.append(nome)
+                return para_resposta(passo, requisicao)
 
     caminho = config.CACHE / f"{_chave(requisicao)}.json"
     # `record` sempre amostra o modelo de novo (senão repetições só reaproveitariam a 1ª resposta)
