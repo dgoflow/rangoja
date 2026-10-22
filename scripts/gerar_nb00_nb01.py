@@ -21,8 +21,11 @@ verificar(meta.version("google-adk") == "1.33.0", "google-adk 1.33.0")'''),
 a = atender(s.falha, s.caso, gravacao=s.gravacoes["falha"])
 resumo(a)
 verificar(a.erro is None and set(a.fonte) == {"gravacao"}, "o atendimento rodou só com a gravação, sem rede e sem chave")'''),
-        md("## N0.3 — Chave de API (opcional)\n\nSem chave você acompanha tudo em `replay`. Com chave, ponha `OPENAI_API_KEY` no `.env` da raiz do projeto para rodar ao vivo."),
-        code('''print("modelo:", config.modelo_primario(), "| modo:", config.modo())
+        md("## N0.3 — Chave de API (opcional)\n\nSem chave você acompanha tudo em `replay`. Para rodar ao vivo, execute a célula abaixo e cole sua `OPENAI_API_KEY` quando ela pedir: a entrada é oculta, a chave vale só para este kernel e nada é gravado. (Se preferir o `.env`, depois de editá-lo reinicie o kernel.)"),
+        code('''if not config.chave_disponivel():
+    print(config.diagnostico_chave())
+    print(config.configurar_chave())  # Enter vazio: segue em replay
+print("modelo:", config.modelo_primario(), "| modo:", config.modo())
 print("chave de API disponível:", config.chave_disponivel())'''),
         md("## N0.4 — Observabilidade (Phoenix)\n\nO Phoenix é opcional. Sem ele, os notebooks mostram a trajetória em texto."),
         code('''print(observabilidade.ligar())
