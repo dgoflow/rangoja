@@ -106,13 +106,18 @@ async for evento in runner.run_async(user_id="101", session_id=sessao.id, new_me
            "- **Nada foi feito.** O cliente leu \"reembolso\", mas não existe reembolso no sistema: o agente tem zero ferramentas. Ao vivo, o modelo às vezes ainda diz que está \"processando\".\n"
            "- **O código não tem o que executar.** A saída é texto: não há categoria nem valor que um sistema possa ler e cumprir.\n\n"
            "Funciona na demo. Não funciona em produção."),
-        md("Daqui em diante usamos um **atalho**. `atender(v0, caso)` monta este mesmo agente e roda este mesmo `Runner`; "
-           "`preparar_secao` escolhe o caso, a versão e a gravação de cada seção e começa com um armazém limpo."),
+        md("Daqui em diante, um **atalho**. `atender(versao, caso)` monta este mesmo agente e roda este mesmo `Runner`, "
+           "mas devolve o resultado organizado em campos que o código pode verificar. "
+           "`preparar_secao` escolhe o caso e a versão de cada seção e usa a gravação dela, para a lição aparecer sempre, mesmo em `live`."),
         code('''s = preparar_secao("N1.1")
-verificar(s.falha.construir().agente_raiz.instruction == PROMPT, "a v0 usa exatamente o PROMPT montado acima")
+agente_v0 = s.falha.construir().agente_raiz
+verificar(agente_v0.instruction == PROMPT and not agente_v0.tools and agente_v0.output_schema is None,
+          "atender(v0, ...) monta o mesmo agente: mesmo PROMPT, sem ferramentas, sem schema")
 falha = atender(s.falha, s.caso, gravacao=s.gravacoes["falha"])
-resumo(falha)
-amostra(s.gravacoes["falha"])'''),
+print("status:    ", falha.status)
+print("decisão:   ", falha.decisao)     # None: não há decisão que o código possa ler
+print("trajetória:", falha.trajetoria)  # []: nenhuma ferramenta foi chamada
+print("fonte:     ", falha.fonte)       # de onde veio a resposta: gravação, live ou cache'''),
         md("O modelo só sabe o que está no contexto. Texto plausível não é fato. Como dar fatos ao modelo? **Ferramentas.**"),
 
         md("## N1.2 — Ferramentas trazem fatos\n\nA mesma reclamação, agora com ferramentas (`buscar_pedido`, `consultar_politica`, cupom, reembolso…). A docstring e os tipos de cada função são o que o modelo lê."),
