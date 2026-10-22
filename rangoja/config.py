@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -83,11 +84,32 @@ def usar_live() -> str:
     return "modo live ligado neste kernel"
 
 
-def configurar_chave(chave: str | None = None) -> str:
-    """Pede a chave com entrada oculta e liga o modo live neste kernel. Nada vai para disco nem para a saída.
+def gravar_env(valores: dict[str, str], arquivo: Path | None = None) -> Path:
+    """Grava as variáveis no .env da raiz, preservando o resto do arquivo. Cria com permissão 600."""
+    arquivo = arquivo or RAIZ / ".env"
+    linhas = arquivo.read_text(encoding="utf-8").splitlines() if arquivo.exists() else []
+    for nome, valor in valores.items():
+        nova = f"{nome}={valor}"
+        for padrao in (rf"^\s*{nome}\s*=", rf"^\s*#\s*{nome}\s*="):  # linha ativa; senão o modelo comentado
+            achou = next((i for i, ln in enumerate(linhas) if re.match(padrao, ln)), None)
+            if achou is not None:
+                linhas[achou] = nova
+                break
+        else:
+            linhas.append(nova)
+    arquivo.touch(mode=0o600, exist_ok=True)
+    arquivo.write_text("\n".join(linhas) + "\n", encoding="utf-8")
+    arquivo.chmod(0o600)
+    return arquivo
 
-    Serve para quem não quer editar o .env (nem reiniciar o kernel). Vale só até o kernel fechar.
+
+def configurar_chave(chave: str | None = None, salvar: bool | None = None, arquivo: Path | None = None) -> str:
+    """Pede a chave com entrada oculta e liga o modo live neste kernel.
+
+    Cada notebook tem seu kernel, então a chave só passa para os outros se for salva no .env.
+    `salvar=None` pergunta (só quando a chave é digitada aqui); a resposta padrão é não.
     """
+    perguntar = chave is None
     if chave is None:
         from getpass import getpass
         try:
@@ -103,26 +125,15 @@ def configurar_chave(chave: str | None = None) -> str:
     os.environ["OPENAI_API_KEY"] = chave
     os.environ["RANGOJA_MODO"] = "live"
     _validadas[chave] = resultado
-    if resultado is None:
-        return "chave guardada, mas não consegui validá-la (sem rede?); modo live ligado neste kernel"
-    return "chave válida; modo live ligado neste kernel"
-
-
-def modelo_primario() -> str:
-    return os.getenv("RANGOJA_MODELO", "gpt-4o-mini")
-
-
-def modelo_fallback() -> str:
-    return os.getenv("RANGOJA_MODELO_FALLBACK", "gpt-4.1-mini")
-
-
-def modelo_juiz() -> str:
-    return os.getenv("RANGOJA_MODELO_JUIZ", "gpt-4o")
-
-
-def repeticoes() -> int:
-    return int(os.getenv("RANGOJA_REPETICOES", "5"))
-
-
-def limiar_estabilidade() -> float:
-    return float(os.getenv("RANGOJA_LIMIAR_ESTABILIDADE", "0.8"))
+    msg = ("chave válida" if resultado else "chave guardada, mas não consegui validá-la (sem rede?)") + "; modo live ligado neste kernel"
+    if salvar is None and perguntar:
+        try:
+            salvar = input("Salvar no .env para os outros notebooks usarem? A chave fica em texto no disco. [s/N] ").strip().lower() in ("s", "sim", "y")
+        except Exception:
+            salvar = False
+    if salvar:
+        destino = gravar_env({"OPENAI_API_KEY": chave, "RANGOJA_MODO": "live"}, arquivo)
+        msg += f"; salva em {destino} (permissão 600)"
+    else:
+        msg += "; vale só para este notebook (os outros vão pedir de novo)"
+    return msg

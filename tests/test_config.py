@@ -50,3 +50,34 @@ def test_validacao_so_uma_vez_por_chave(monkeypatch):
 def test_configurar_chave_sem_teclado_nao_trava(monkeypatch):
     monkeypatch.setattr("getpass.getpass", lambda *a, **k: (_ for _ in ()).throw(EOFError()))
     assert "continua em replay" in config.configurar_chave()
+
+
+def test_gravar_env_preserva_o_resto_e_restringe_permissao(tmp_path):
+    arq = tmp_path / ".env"
+    arq.write_text("# nota\nOPENAI_API_KEY=\n# RANGOJA_MODO=replay\nRANGOJA_MODELO=gpt-4o-mini\n", encoding="utf-8")
+    config.gravar_env({"OPENAI_API_KEY": "sk-x", "RANGOJA_MODO": "live"}, arq)
+    assert arq.read_text(encoding="utf-8").splitlines() == [
+        "# nota", "OPENAI_API_KEY=sk-x", "RANGOJA_MODO=live", "RANGOJA_MODELO=gpt-4o-mini"]
+    assert oct(arq.stat().st_mode & 0o777) == "0o600"
+
+
+def test_gravar_env_cria_o_arquivo(tmp_path):
+    arq = config.gravar_env({"OPENAI_API_KEY": "sk-x"}, tmp_path / ".env")
+    assert arq.read_text(encoding="utf-8") == "OPENAI_API_KEY=sk-x\n"
+
+
+def test_configurar_chave_pergunta_e_salva(monkeypatch, tmp_path):
+    monkeypatch.setattr("getpass.getpass", lambda *a, **k: "sk-digitada")
+    monkeypatch.setattr("builtins.input", lambda *a: "s")
+    monkeypatch.setattr(config, "validar_chave", lambda chave, timeout=0: True)
+    msg = config.configurar_chave(arquivo=tmp_path / ".env")
+    assert "salva em" in msg and "sk-digitada" not in msg
+    assert "OPENAI_API_KEY=sk-digitada" in (tmp_path / ".env").read_text(encoding="utf-8")
+
+
+def test_configurar_chave_por_padrao_nao_salva(monkeypatch, tmp_path):
+    monkeypatch.setattr("getpass.getpass", lambda *a, **k: "sk-digitada")
+    monkeypatch.setattr("builtins.input", lambda *a: "")
+    monkeypatch.setattr(config, "validar_chave", lambda chave, timeout=0: True)
+    msg = config.configurar_chave(arquivo=tmp_path / ".env")
+    assert "vale só para este notebook" in msg and not (tmp_path / ".env").exists()

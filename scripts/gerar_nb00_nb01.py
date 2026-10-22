@@ -21,7 +21,7 @@ verificar(meta.version("google-adk") == "1.33.0", "google-adk 1.33.0")'''),
 a = atender(s.falha, s.caso, gravacao=s.gravacoes["falha"])
 resumo(a)
 verificar(a.erro is None and set(a.fonte) == {"gravacao"}, "o atendimento rodou só com a gravação, sem rede e sem chave")'''),
-        md("## N0.3 — Chave de API (opcional)\n\nSem chave você acompanha tudo em `replay`. Para rodar ao vivo, execute a célula abaixo: se já houver chave (no `.env`), ela liga o modo `live`; se não houver, pede sua `OPENAI_API_KEY` com entrada oculta. A chave vale só para este kernel e nada é gravado. (Se preferir o `.env`, depois de editá-lo reinicie o kernel.)"),
+        md("## N0.3 — Chave de API (opcional)\n\nSem chave você acompanha tudo em `replay`. Para rodar ao vivo, execute a célula abaixo: se já houver chave (no `.env`), ela liga o modo `live`; se não houver, pede sua `OPENAI_API_KEY` com entrada oculta. Cada notebook tem seu próprio kernel: a chave vale só para este, a menos que você aceite **salvá-la no `.env`** (fora do git) quando a célula perguntar."),
         code('''if not config.chave_disponivel():
     print(config.diagnostico_chave())
     print(config.configurar_chave())  # Enter vazio: segue em replay

@@ -69,7 +69,7 @@ Mensagem curta, com a promessa e uma tarefa:
 | macOS | deve funcionar, não verificado |
 | Windows nativo (PowerShell) | não recomendado |
 
-Sem chave, tudo roda em `replay`. **Com chave (preferido)**, o modo `live` liga na célula N0.3: você cola a chave, a entrada é oculta, nada é gravado.
+Sem chave, tudo roda em `replay`. **Com chave (preferido)**, o modo `live` liga na célula N0.3: você cola a chave, a entrada é oculta; a célula pergunta se salva no `.env` para os outros notebooks.
 
 ```bash
 git clone https://github.com/dgoflow/rangoja.git ~/rangoja && cd ~/rangoja
