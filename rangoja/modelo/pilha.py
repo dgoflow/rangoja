@@ -41,6 +41,7 @@ class ModeloRangoja(BaseLlm):
     papel: str = "primario"          # primario | secundario | juiz
     retry: bool = False
     fallback: Any = None             # ModeloRangoja | None
+    replay: Any = None               # Roteiro | None: resposta gravada usada só em modo replay
 
     async def generate_content_async(  # type: ignore[override]
         self, llm_request: Any, stream: bool = False
@@ -86,6 +87,12 @@ async def _fonte_interna(modelo: ModeloRangoja, requisicao: Any) -> LlmResponse:
         passo = origem.proximo(modelo.agente, requisicao)
         if passo is not None:
             ctx.fontes.append(nome)
+            return para_resposta(passo, requisicao)
+
+    if modelo.replay is not None and config.modo() == "replay":
+        passo = modelo.replay.proximo(modelo.agente, requisicao)
+        if passo is not None:
+            ctx.fontes.append("gravacao")
             return para_resposta(passo, requisicao)
 
     caminho = config.CACHE / f"{_chave(requisicao)}.json"

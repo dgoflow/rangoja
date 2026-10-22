@@ -14,6 +14,8 @@ from typing import Any
 
 from . import config, falhas, observabilidade, relogio, roteiros
 from .armazem import Armazem
+from .modelo import ModeloRangoja
+from .modelo.roteiro import Roteiro
 from .secoes import SECOES, SpecSecao
 from .versoes import Versao
 
@@ -62,6 +64,16 @@ class Secao:
         alvo = versao or self.falha
         assert alvo is not None
         return roteiros.ROTEIROS[self._roteiro](alvo)
+
+
+def modelo(replay: str | None = None, agente: str = "unico") -> ModeloRangoja:
+    """O LLM de um agente montado à mão no notebook: gpt-4o-mini via LiteLlm (modo live).
+
+    Em modo replay, devolve a gravação `replay` (o que o modelo real respondeu), sem rede e sem chave.
+    `agente` precisa ser o `name` do LlmAgent: a gravação guarda as respostas por agente.
+    """
+    gravacao = Roteiro.de_arquivo(config.GRAVACOES / f"{replay}.json") if replay else None
+    return ModeloRangoja(agente=agente, replay=gravacao)
 
 
 def preparar_secao(secao_id: str) -> Secao:

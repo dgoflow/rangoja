@@ -48,17 +48,65 @@ def nb01():
            "Cada seção mostra um problema real do RangoJá e a correção. As execuções vêm de **gravações do modelo real**; "
            "quando uma gravação foi escolhida entre várias, a célula diz a taxa."),
         setup(),
-        md("## N1.1 — O prompt que funciona na demo\n\nCaso `C01`: *\"Meu pedido 4821 chegou frio e faltou o refri.\"* A `v0` recebe a política inteira na instrução e **nenhuma ferramenta**."),
+        md("## N1.1 — O prompt que funciona na demo\n\n"
+           "Antes de qualquer atalho, o agente inteiro, em ADK puro. Primeiro, o que chegou: a reclamação do cliente e o pedido como ele está no sistema."),
+        code('''mensagem = "Meu pedido 4821 chegou frio e faltou o refri."
+
+pedido = dados.pedido("4821")
+for item in pedido.itens:
+    print(f"{item.nome:22s} R$ {float(item.preco):6.2f}   {'entregue' if item.entregue else 'NÃO entregue'}")
+print(f"{'total':22s} R$ {float(pedido.total):6.2f}")'''),
+        md("O agente é um `LlmAgent` do ADK: um nome, um modelo e uma instrução. Aqui a instrução é o prompt com a política inteira colada.\n\n"
+           "As linhas comentadas são os **pontos de intervenção**: os lugares onde o código pode agir sobre o agente. Cada seção do material preenche um deles."),
+        code('''from google.adk.agents import LlmAgent
+from rangoja.notebook import modelo
+
+politica = "\\n\\n".join(f"## {tema}\\n{texto}" for tema, texto in dados.politica_secoes().items())
+PROMPT = ("Você atende clientes do RangoJá, um app de delivery. Responda em português, com cordialidade e objetividade."
+          "\\n\\nPolítica de atendimento:\\n" + politica)
+
+agente = LlmAgent(
+    name="unico",
+    model=modelo(replay="N1.1/falha"),  # gpt-4o-mini via LiteLlm; em replay, a resposta gravada do modelo real
+    instruction=PROMPT,
+    # tools=[buscar_pedido, registrar_reembolso, ...]   ← N1.2  ferramentas trazem fatos e agem
+    # output_schema=Decisao                             ← N1.4  decisão que o código consegue ler
+    # before_model_callback=guardrail_entrada           ← N2.2  filtra o que chega ao modelo
+    # after_model_callback=guardrail_saida              ← N2.3  filtra o que sai para o cliente
+    # before_tool_callback=limite_ferramenta            ← N2.4, N3.4  autoriza cada ação
+    # on_tool_error_callback=erro_estruturado           ← N3.2  erro de ferramenta vira resultado
+)
+print(f"instrução com {len(PROMPT)} caracteres; ferramentas: {len(agente.tools)}")'''),
+        md("Para rodar, o `Runner` do ADK conduz o loop: entrega a mensagem ao agente, chama o modelo e devolve **eventos**. A sessão guarda a conversa."),
+        code('''from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService  # ← N3.5: SqliteSessionService sobrevive à queda do processo
+from google.genai import types
+
+runner = Runner(app_name="rangoja", agent=agente, session_service=InMemorySessionService())
+sessao = await runner.session_service.create_session(app_name="rangoja", user_id="101")
+pergunta = types.Content(role="user", parts=[types.Part(text=mensagem)])
+
+chamadas, resposta_v0 = [], None
+async for evento in runner.run_async(user_id="101", session_id=sessao.id, new_message=pergunta):
+    for parte in (evento.content.parts if evento.content else []):
+        if parte.function_call:
+            chamadas.append(parte.function_call.name)
+            print(f"[{evento.author}] chama {parte.function_call.name}({dict(parte.function_call.args)})")
+        if parte.text:
+            resposta_v0 = parte.text
+            print(f"[{evento.author}] {parte.text}")'''),
+        md("**Parece certo, e é esse o problema.** A resposta segue a política (voucher de até R$ 15 por qualidade, reembolso do item que faltou). "
+           "Mas o agente acreditou no cliente sem olhar o pedido, não registrou reembolso nenhum, e a resposta não diz quanto: o código não tem o que executar."),
+        code('''verificar(not chamadas, "nenhuma ferramenta chamada: o agente não consultou o pedido nem registrou o reembolso")
+verificar(agente.output_schema is None, "a saída é só texto: não há decisão (categoria, valor) que o código possa ler")
+print("a resposta cita um valor de reembolso?", "R$ 8" in (resposta_v0 or ""))'''),
+        md("Daqui em diante usamos um **atalho**. `atender(v0, caso)` monta este mesmo agente e roda este mesmo `Runner`; "
+           "`preparar_secao` escolhe o caso, a versão e a gravação de cada seção e começa com um armazém limpo."),
         code('''s = preparar_secao("N1.1")
-mostrar(v0)
+verificar(s.falha.construir().agente_raiz.instruction == PROMPT, "a v0 usa exatamente o PROMPT montado acima")
 falha = atender(s.falha, s.caso, gravacao=s.gravacoes["falha"])
 resumo(falha)
 amostra(s.gravacoes["falha"])'''),
-        code('''pedido = dados.pedido("4821")
-print("itens do pedido 4821:", [(i.nome, float(i.preco), "entregue" if i.entregue else "NÃO entregue") for i in pedido.itens])
-print("\\nresposta da v0:\\n", falha.resposta)
-verificar_falha(falha, not falha.trajetoria, "a v0 não consultou nada: só tinha a política e a reclamação")
-verificar_falha(falha, falha.decisao is None, "a resposta é só texto: não há decisão que o código possa usar")'''),
         md("O modelo só sabe o que está no contexto. Texto plausível não é fato. Como dar fatos ao modelo? **Ferramentas.**"),
 
         md("## N1.2 — Ferramentas trazem fatos\n\nA mesma reclamação, agora com ferramentas (`buscar_pedido`, `consultar_politica`, cupom, reembolso…). A docstring e os tipos de cada função são o que o modelo lê."),
