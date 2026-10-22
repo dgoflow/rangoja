@@ -42,7 +42,7 @@ class ModeloRangoja(BaseLlm):
     retry: bool = False
     fallback: Any = None             # ModeloRangoja | None
     avulso: bool = False             # agente montado à mão: ignora roteiro e gravação do contexto de atender()
-    replay: Any = None               # Roteiro | None: só para o avulso, resposta gravada usada em modo replay
+    replay: Any = None               # Roteiro | None: só para o avulso, a gravação que ele repete
 
     async def generate_content_async(  # type: ignore[override]
         self, llm_request: Any, stream: bool = False
@@ -83,7 +83,7 @@ async def _fonte(modelo: ModeloRangoja, requisicao: Any) -> LlmResponse:
 async def _fonte_interna(modelo: ModeloRangoja, requisicao: Any) -> LlmResponse:
     ctx = contexto.atual()
     if modelo.avulso:
-        if modelo.replay is not None and config.modo() == "replay":
+        if modelo.replay is not None:
             try:
                 passo = modelo.replay.proximo(modelo.agente, requisicao)
             except RoteiroEsgotado:  # a célula rodou de novo: recomeça a gravação

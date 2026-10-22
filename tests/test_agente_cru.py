@@ -7,7 +7,7 @@ from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
 from rangoja import dados
-from rangoja.notebook import modelo
+from rangoja.notebook import gravacao
 from rangoja.versoes import v0
 
 PROMPT = ("Você atende clientes do RangoJá, um app de delivery. Responda em português, com cordialidade e objetividade."
@@ -21,7 +21,7 @@ def test_prompt_da_n11_e_o_da_v0():
 
 def test_agente_cru_responde_com_a_gravacao_em_replay(monkeypatch):
     monkeypatch.setenv("RANGOJA_MODO", "replay")
-    agente = LlmAgent(name="unico", model=modelo(replay="N1.1/falha"), instruction=PROMPT)
+    agente = LlmAgent(name="unico", model=gravacao("N1.1/falha"), instruction=PROMPT)
 
     async def rodar():
         runner = Runner(app_name="rangoja", agent=agente, session_service=InMemorySessionService())
@@ -52,11 +52,18 @@ def test_agente_cru_ignora_a_gravacao_deixada_por_atender(monkeypatch):
     monkeypatch.setenv("RANGOJA_MODO", "replay")
     s = preparar_secao("N1.2")
     atender(s.correcao, s.caso, gravacao=s.gravacoes["correcao"])
-    agente = LlmAgent(name="unico", model=modelo(replay="N1.1/falha"), instruction=PROMPT)
+    agente = LlmAgent(name="unico", model=gravacao("N1.1/falha"), instruction=PROMPT)
     assert "voucher de R$ 15" in _rodar_cru(agente)[-1]
 
 
 def test_agente_cru_pode_rodar_duas_vezes(monkeypatch):
     monkeypatch.setenv("RANGOJA_MODO", "replay")
-    agente = LlmAgent(name="unico", model=modelo(replay="N1.1/falha"), instruction=PROMPT)
+    agente = LlmAgent(name="unico", model=gravacao("N1.1/falha"), instruction=PROMPT)
     assert _rodar_cru(agente)[-1] == _rodar_cru(agente)[-1]
+
+
+def test_gravacao_repete_mesmo_em_live(monkeypatch):
+    """gravacao() tem um só significado: repete a gravação, qualquer que seja o modo (sem rede)."""
+    monkeypatch.setenv("RANGOJA_MODO", "live")
+    agente = LlmAgent(name="unico", model=gravacao("N1.1/falha"), instruction=PROMPT)
+    assert "voucher de R$ 15" in _rodar_cru(agente)[-1]

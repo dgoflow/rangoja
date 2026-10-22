@@ -56,18 +56,25 @@ pedido = dados.pedido("4821")
 for item in pedido.itens:
     print(f"{item.nome:22s} R$ {float(item.preco):6.2f}   {'entregue' if item.entregue else 'NÃO entregue'}")
 print(f"{'total':22s} R$ {float(pedido.total):6.2f}")'''),
-        md("O agente é um `LlmAgent` do ADK: um nome, um modelo e uma instrução. Aqui a instrução é o prompt com a política inteira colada.\n\n"
+        md("O agente é um `LlmAgent` do ADK: um nome, um modelo e uma instrução. Aqui a instrução é o prompt com a política inteira colada. "
+           "O modelo vem do `.env`: em `live`, o `LiteLlm` chama o modelo de `RANGOJA_MODELO` com a sua chave; em `replay`, uma gravação do modelo real responde no lugar dele.\n\n"
            "As linhas comentadas são os **pontos de intervenção**: os lugares onde o código pode agir sobre o agente. Cada seção do material preenche um deles."),
         code('''from google.adk.agents import LlmAgent
-from rangoja.notebook import modelo
+from google.adk.models.lite_llm import LiteLlm
+from rangoja.notebook import gravacao
 
 politica = "\\n\\n".join(f"## {tema}\\n{texto}" for tema, texto in dados.politica_secoes().items())
 PROMPT = ("Você atende clientes do RangoJá, um app de delivery. Responda em português, com cordialidade e objetividade."
           "\\n\\nPolítica de atendimento:\\n" + politica)
 
+if config.modo() == "replay":
+    llm = gravacao("N1.1/falha")  # sem chave: o que o modelo real respondeu quando gravamos
+else:
+    llm = LiteLlm(model=f"openai/{config.modelo_primario()}")  # o modelo de RANGOJA_MODELO (.env), com a sua chave
+
 agente = LlmAgent(
     name="unico",
-    model=modelo(replay="N1.1/falha"),  # gpt-4o-mini via LiteLlm; em replay, a resposta gravada do modelo real
+    model=llm,
     instruction=PROMPT,
     # tools=[buscar_pedido, registrar_reembolso, ...]   ← N1.2  ferramentas trazem fatos e agem
     # output_schema=Decisao                             ← N1.4  decisão que o código consegue ler
@@ -76,6 +83,7 @@ agente = LlmAgent(
     # before_tool_callback=limite_ferramenta            ← N2.4, N3.4  autoriza cada ação
     # on_tool_error_callback=erro_estruturado           ← N3.2  erro de ferramenta vira resultado
 )
+print(f"modelo: {'gravação N1.1/falha' if config.modo() == 'replay' else config.modelo_primario() + ' ao vivo'}")
 print(f"instrução com {len(PROMPT)} caracteres; ferramentas: {len(agente.tools)}")'''),
         md("Para rodar, o `Runner` do ADK conduz o loop: entrega a mensagem ao agente, chama o modelo e devolve **eventos**. A sessão guarda a conversa."),
         code('''from google.adk.runners import Runner

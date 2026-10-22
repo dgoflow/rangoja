@@ -66,15 +66,14 @@ class Secao:
         return roteiros.ROTEIROS[self._roteiro](alvo)
 
 
-def modelo(replay: str | None = None, agente: str = "unico") -> ModeloRangoja:
-    """O LLM de um agente montado à mão no notebook: gpt-4o-mini via LiteLlm (modo live).
+def gravacao(nome: str, agente: str = "unico") -> ModeloRangoja:
+    """Um modelo que repete o que o modelo real respondeu quando gravamos `nome` (rangoja/gravacoes/).
 
-    Em modo replay, devolve a gravação `replay` (o que o modelo real respondeu), sem rede e sem chave.
-    `agente` precisa ser o `name` do LlmAgent: a gravação guarda as respostas por agente.
-    Independe das seções: não usa a gravação que `atender()` deixou no contexto e pode rodar de novo.
+    Serve de `model=` para um LlmAgent montado à mão, sem rede e sem chave. `agente` precisa ser o `name`
+    do LlmAgent: a gravação guarda as respostas por agente. Independe das seções (não usa a gravação que
+    `atender()` deixou no contexto) e recomeça do início se a célula rodar de novo.
     """
-    gravacao = Roteiro.de_arquivo(config.GRAVACOES / f"{replay}.json") if replay else None
-    return ModeloRangoja(agente=agente, avulso=True, replay=gravacao)
+    return ModeloRangoja(agente=agente, avulso=True, replay=Roteiro.de_arquivo(config.GRAVACOES / f"{nome}.json"))
 
 
 def preparar_secao(secao_id: str) -> Secao:
