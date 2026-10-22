@@ -81,3 +81,15 @@ def test_configurar_chave_por_padrao_nao_salva(monkeypatch, tmp_path):
     monkeypatch.setattr(config, "validar_chave", lambda chave, timeout=0: True)
     msg = config.configurar_chave(arquivo=tmp_path / ".env")
     assert "vale só para este notebook" in msg and not (tmp_path / ".env").exists()
+
+
+def test_configuracao_publica_do_modelo():
+    """O NB00 e o pacote dependem destas funções; um reescrita de config.py não pode derrubá-las."""
+    assert config.modelo_primario() and config.modelo_fallback() and config.modelo_juiz()
+    assert config.repeticoes() >= 1 and 0 < config.limiar_estabilidade() <= 1
+
+
+def test_preparar_ambiente_roda_sem_chave(monkeypatch):
+    from rangoja import notebook
+    monkeypatch.setenv("RANGOJA_PHOENIX", "off")
+    notebook.preparar_ambiente()  # a célula de preparação do NB00 não pode quebrar

@@ -137,3 +137,23 @@ def configurar_chave(chave: str | None = None, salvar: bool | None = None, arqui
     else:
         msg += "; vale só para este notebook (os outros vão pedir de novo)"
     return msg
+
+
+def modelo_primario() -> str:
+    return os.getenv("RANGOJA_MODELO", "gpt-4o-mini")
+
+
+def modelo_fallback() -> str:
+    return os.getenv("RANGOJA_MODELO_FALLBACK", "gpt-4.1-mini")
+
+
+def modelo_juiz() -> str:
+    return os.getenv("RANGOJA_MODELO_JUIZ", "gpt-4o")
+
+
+def repeticoes() -> int:
+    return int(os.getenv("RANGOJA_REPETICOES", "5"))
+
+
+def limiar_estabilidade() -> float:
+    return float(os.getenv("RANGOJA_LIMIAR_ESTABILIDADE", "0.8"))
