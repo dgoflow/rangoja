@@ -127,9 +127,8 @@ amostra(s.gravacoes["correcao"])'''),
 print("consultou o pedido?", chamou(correcao.trajetoria, "buscar_pedido"))
 print("reembolsos registrados:", registrados, "| valor real do refrigerante: R$ 8,00")
 verificar_falha(correcao, correcao.erro is None and bool(correcao.trajetoria), "com ferramentas, o agente passou a agir no sistema")'''),
-        md("**Achado das gravações:** ter ferramentas disponíveis **não garante** que o modelo as use para consultar os fatos. "
-           "Nesta configuração (política colada na instrução, resposta em texto), o modelo agiu sem consultar o pedido em todas as execuções amostradas, "
-           "e os valores que registrou não batem com o pedido. Veremos em N1.6 que o que muda isso é o que **entra no contexto**."),
+        md("**Achado das gravações:** ter ferramentas disponíveis **não garante** que o modelo as use para consultar os fatos. Nesta configuração (política colada na instrução, resposta em texto), nenhuma das 6 execuções gravadas consultou o pedido, e os valores que o modelo registrou não batem com ele. "
+           "Isso muda nas próximas seções: com a decisão estruturada (N1.4) e o estado da conversa (N1.5), a versão de falha da N1.6 consultou o pedido em 5 de 6 execuções; com o contexto enxuto, em 6 de 6. Com 6 amostras, não dá para separar o efeito de cada componente."),
 
         md("## N1.3 — O loop por baixo\n\nUm agente é um loop: o modelo pede uma ferramenta, a ferramenta responde, o modelo decide o próximo passo ou responde. Os eventos do ADK mostram isso."),
         code('''from rangoja.observabilidade import anatomia
@@ -164,18 +163,29 @@ print("estado da sessão (com estado):", {k: v for k, v in correcao.estado.items
 verificar_falha(correcao, correcao.estado.get("pedido_id") == "4822", "o estado guardou o pedido da conversa")
 verificar_falha(falha, falha.estado.get("pedido_id") != "4822", "sem estado, a última sessão não sabe qual é o pedido")'''),
 
-        md("## N1.6 — O que entra no contexto\n\nCaso `C01`. Se `buscar_pedido` devolve **o pedido inteiro**, o endereço e os dados do entregador entram no contexto do modelo. A correção é devolver só o que a decisão precisa."),
+        md("## N1.6 — O que entra no contexto\n\n"
+           "Caso `C01`, agora quase na `v1`: ferramentas, decisão estruturada e estado, mas **sem o contexto enxuto**. "
+           "`buscar_pedido` devolve o pedido inteiro, inclusive os dados do entregador, que o modelo não precisa para decidir."),
         code('''s = preparar_secao("N1.6")
 falha = atender(s.falha, s.caso, gravacao=s.gravacoes["falha"])
 resumo(falha); amostra(s.gravacoes["falha"])
 buscas = [c for c in falha.trajetoria if c.ferramenta == "buscar_pedido"]
-print("campos devolvidos ao modelo (versão completa):", sorted(buscas[0].resultado.keys()))
-verificar_falha(falha, "entregador" in buscas[0].resultado, "o contexto trouxe os dados do entregador (PII)")'''),
+if buscas:
+    print("o que o modelo recebeu sobre o entregador:", buscas[0].resultado.get("entregador"))
+    verificar_falha(falha, "entregador" in buscas[0].resultado, "nome, telefone e placa do entregador entraram no contexto do modelo")
+else:
+    print("nesta execução o modelo não consultou o pedido")'''),
+        md("**A resposta está certa, e é por isso que o problema passa despercebido.** O dado do entregador não aparece na resposta, mas está no contexto: o modelo pode repeti-lo a qualquer momento. "
+           "Em N2.3 simulamos esse vazamento (nas 10 execuções reais, o modelo não vazou) e vemos o guardrail de saída barrá-lo. "
+           "Aqui a correção vem antes: a ferramenta devolve só o que a decisão precisa."),
         code('''correcao = atender(s.correcao, s.caso, gravacao=s.gravacoes["correcao"])
 resumo(correcao); amostra(s.gravacoes["correcao"])
 buscas = [c for c in correcao.trajetoria if c.ferramenta == "buscar_pedido"]
-print("campos devolvidos ao modelo (versão enxuta):", sorted(buscas[0].resultado.keys()))
-verificar_falha(correcao, "entregador" not in buscas[0].resultado, "com o contexto enxuto, nenhum dado do entregador chega ao modelo")'''),
+if buscas:
+    print("campos devolvidos ao modelo (versão enxuta):", sorted(buscas[0].resultado.keys()))
+    verificar_falha(correcao, "entregador" not in buscas[0].resultado, "com o contexto enxuto, nenhum dado do entregador chega ao modelo")
+else:
+    print("nesta execução o modelo não consultou o pedido")'''),
 
         md("## N1.7 — Lembrar do cliente\n\nCaso `C13`: dois atendimentos do mesmo cliente. No primeiro ele diz que prefere a entrega na portaria. Sem memória, o segundo atendimento não sabe."),
         code('''s = preparar_secao("N1.7")
