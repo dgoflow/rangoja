@@ -37,7 +37,7 @@ def preparar_ambiente() -> None:
     info = {
         "modo": config.modo(),
         "modelo": config.modelo_primario(),
-        "chave de API": "sim" if config.chave_disponivel() else "não (use replay)",
+        "chave de API": config.estado_chave(),
         "observabilidade": obs,
     }
     linhas = "".join(f"<tr><td><b>{html.escape(k)}</b></td><td>{html.escape(str(v))}</td></tr>" for k, v in info.items())

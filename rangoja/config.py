@@ -45,6 +45,9 @@ def diagnostico_chave() -> str:
     return "o .env existe, mas a linha OPENAI_API_KEY está vazia ou comentada; preencha, ou rode config.configurar_chave()"
 
 
+_validadas: dict[str, bool | None] = {}
+
+
 def validar_chave(chave: str, timeout: float = 8.0) -> bool | None:
     """Testa a chave contra a OpenAI sem gastar tokens. True/False; None se não deu para saber (sem rede)."""
     import urllib.error
@@ -57,6 +60,27 @@ def validar_chave(chave: str, timeout: float = 8.0) -> bool | None:
         return False if exc.code in (401, 403) else None
     except Exception:
         return None
+
+
+def estado_chave() -> str:
+    """Estado da chave em uma frase curta para a tabela do NB00 (valida uma vez por chave, sem gastar tokens)."""
+    if not chave_disponivel():
+        return "não (use replay)"
+    chave = os.environ["OPENAI_API_KEY"]
+    if chave not in _validadas:
+        _validadas[chave] = validar_chave(chave, timeout=3.0)
+    return {True: "sim, validada", False: "sim, mas a OpenAI a recusou (confira o valor)",
+            None: "sim, não validada (sem rede?)"}[_validadas[chave]]
+
+
+def usar_live() -> str:
+    """Liga o modo live neste kernel, se houver chave que a OpenAI não recuse."""
+    if not chave_disponivel():
+        return "sem chave: continua em replay"
+    if estado_chave().startswith("sim, mas"):
+        return "a OpenAI recusou a chave: continua em replay"
+    os.environ["RANGOJA_MODO"] = "live"
+    return "modo live ligado neste kernel"
 
 
 def configurar_chave(chave: str | None = None) -> str:
@@ -78,6 +102,7 @@ def configurar_chave(chave: str | None = None) -> str:
         return "a OpenAI recusou essa chave (confira se copiou inteira); continua como estava"
     os.environ["OPENAI_API_KEY"] = chave
     os.environ["RANGOJA_MODO"] = "live"
+    _validadas[chave] = resultado
     if resultado is None:
         return "chave guardada, mas não consegui validá-la (sem rede?); modo live ligado neste kernel"
     return "chave válida; modo live ligado neste kernel"
