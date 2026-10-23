@@ -121,8 +121,10 @@ print("fonte:     ", falha.fonte)       # de onde veio a resposta: gravação, l
         md("O modelo só sabe o que está no contexto. Texto plausível não é fato. Como dar fatos ao modelo? **Ferramentas.**"),
 
         md("## N1.2 — Ferramentas trazem fatos\n\nA mesma reclamação, agora com ferramentas (`buscar_pedido`, `consultar_politica`, cupom, reembolso…). A docstring e os tipos de cada função são o que o modelo lê."),
+        md("**O que muda da falha para a correção**, lido dos próprios agentes que o ADK vai rodar:"),
         code('''s = preparar_secao("N1.2")
-mostrar(ferramentas._fabrica_buscar_pedido(enxuta=True))
+comparar(s.falha, s.correcao)'''),
+        code('''mostrar(ferramentas._fabrica_buscar_pedido(enxuta=True))
 correcao = atender(s.correcao, s.caso, gravacao=s.gravacoes["correcao"])
 resumo(correcao)
 amostra(s.gravacoes["correcao"])'''),
@@ -142,8 +144,10 @@ passos = [ev for ev in a.eventos if ev.content and ev.content.parts]
 verificar(len(passos) >= 2, "há pelo menos dois passos: o modelo age e o sistema responde")'''),
 
         md("## N1.4 — Prosa × estrutura\n\nCaso `C02` (atraso). O agente decide em **prosa**: o código não tem como extrair categoria e valor. A correção é um **contrato**: a decisão é estruturada (`Decisao`) e a resposta ao cliente continua em texto."),
+        md("**O que muda da falha para a correção**, lido dos próprios agentes que o ADK vai rodar:"),
         code('''s = preparar_secao("N1.4")
-falha = atender(s.falha, s.caso, gravacao=s.gravacoes["falha"])
+comparar(s.falha, s.correcao)'''),
+        code('''falha = atender(s.falha, s.caso, gravacao=s.gravacoes["falha"])
 resumo(falha); amostra(s.gravacoes["falha"])
 verificar_falha(falha, falha.decisao is None, "em prosa, o código não recebe uma decisão utilizável")'''),
         code('''from rangoja import tipos
@@ -156,8 +160,10 @@ verificar_falha(correcao, correcao.decisao.solucao in __import__("rangoja.politi
         md("Nota: com a API do ADK, a saída estruturada chega por uma ferramenta interna (`set_model_response`). Ela aparece nos eventos e é ignorada nas funções de trajetória."),
 
         md("## N1.5 — Estado da conversa\n\nCaso `C11`: três mensagens (sem pedido → o 4822, faltou o refri → \"e a sobremesa também\"). Sem estado, cada mensagem abre uma sessão nova."),
+        md("**O que muda da falha para a correção**, lido dos próprios agentes que o ADK vai rodar:"),
         code('''s = preparar_secao("N1.5")
-falha = atender(s.falha, s.caso, gravacao=s.gravacoes["falha"])
+comparar(s.falha, s.correcao)'''),
+        code('''falha = atender(s.falha, s.caso, gravacao=s.gravacoes["falha"])
 resumo(falha); amostra(s.gravacoes["falha"])
 print("estado da última sessão (sem estado):", {k: v for k, v in falha.estado.items() if k in ("pedido_id", "compensacoes")})'''),
         code('''correcao = atender(s.correcao, s.caso, gravacao=s.gravacoes["correcao"])
@@ -169,8 +175,10 @@ verificar_falha(falha, falha.estado.get("pedido_id") != "4822", "sem estado, a �
         md("## N1.6 — O que entra no contexto\n\n"
            "Caso `C01`, agora quase na `v1`: ferramentas, decisão estruturada e estado, mas **sem o contexto enxuto**. "
            "`buscar_pedido` devolve o pedido inteiro, inclusive os dados do entregador, que o modelo não precisa para decidir."),
+        md("**O que muda da falha para a correção**, lido dos próprios agentes que o ADK vai rodar:"),
         code('''s = preparar_secao("N1.6")
-falha = atender(s.falha, s.caso, gravacao=s.gravacoes["falha"])
+comparar(s.falha, s.correcao)'''),
+        code('''falha = atender(s.falha, s.caso, gravacao=s.gravacoes["falha"])
 resumo(falha); amostra(s.gravacoes["falha"])
 buscas = [c for c in falha.trajetoria if c.ferramenta == "buscar_pedido"]
 if buscas:
@@ -191,8 +199,10 @@ else:
     print("nesta execução o modelo não consultou o pedido")'''),
 
         md("## N1.7 — Lembrar do cliente\n\nCaso `C13`: dois atendimentos do mesmo cliente. No primeiro ele diz que prefere a entrega na portaria. Sem memória, o segundo atendimento não sabe."),
+        md("**O que muda da falha para a correção**, lido dos próprios agentes que o ADK vai rodar:"),
         code('''s = preparar_secao("N1.7")
-falha = atender(s.falha, s.caso, gravacao=s.gravacoes["falha"])
+comparar(s.falha, s.correcao)'''),
+        code('''falha = atender(s.falha, s.caso, gravacao=s.gravacoes["falha"])
 resumo(falha); amostra(s.gravacoes["falha"])
 verificar_falha(falha, "portaria" not in (falha.resposta or "").lower(), "sem memória, o segundo atendimento não menciona a portaria")'''),
         code('''mostrar(ferramentas.anotar_observacao)

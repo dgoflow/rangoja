@@ -143,6 +143,134 @@ def mostrar(objeto: Any) -> None:
     _exibir(_codigo_html(codigo), codigo)
 
 
+_CALLBACKS = ["before_agent_callback", "before_model_callback", "after_model_callback",
+              "before_tool_callback", "on_tool_error_callback", "after_tool_callback", "after_agent_callback"]
+
+
+def _nomes(valor: Any) -> list[str]:
+    if valor is None:
+        return []
+    return [getattr(v, "__name__", type(v).__name__) for v in (valor if isinstance(valor, list) else [valor])]
+
+
+def _ferramenta(f: Any) -> str:
+    """Nome da ferramenta e as opções com que a fábrica a montou (ex.: com_aprovacao=True)."""
+    nome = getattr(f, "__name__", type(f).__name__)
+    opcoes = {n: c.cell_contents for n, c in zip(getattr(getattr(f, "__code__", None), "co_freevars", ()), f.__closure__ or [])
+              if isinstance(c.cell_contents, bool)} if getattr(f, "__closure__", None) else {}
+    return nome + (f"({', '.join(f'{k}={v}' for k, v in sorted(opcoes.items()))})" if opcoes else "")
+
+
+def _ficha(versao: Versao) -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
+    """Lê do agente construído (o mesmo que o ADK roda) o que define o comportamento de cada agente e da execução."""
+    construida = versao.construir()
+    raiz = construida.agente_raiz
+    agentes = list(raiz.sub_agents) if raiz.sub_agents else [raiz]
+    ficha = {}
+    for ag in agentes:
+        ficha[ag.name] = {
+            "instrução": getattr(ag, "instruction", "") or "",
+            "ferramentas": [_ferramenta(f) for f in getattr(ag, "tools", [])],
+            "saída estruturada": getattr(getattr(ag, "output_schema", None), "__name__", None) or "—",
+            **{cb: ", ".join(_nomes(getattr(ag, cb, None))) or "—" for cb in _CALLBACKS},
+        }
+    m = getattr(agentes[0], "model", None)
+    execucao = {
+        "agentes": " → ".join(a.name for a in agentes) + (" (SequentialAgent)" if raiz.sub_agents else ""),
+        "sessão": "uma por atendimento" if "estado" in versao else "uma nova a cada mensagem",
+        "sessões guardadas em": "SQLite (sobrevivem à queda)" if "persistencia" in versao else "memória",
+        "máximo de chamadas ao modelo": str(construida.run_config.max_llm_calls),
+        "retry do modelo": "sim" if getattr(m, "retry", False) else "não",
+        "fallback do modelo": "sim" if getattr(m, "fallback", None) is not None else "não",
+    }
+    return ficha, execucao
+
+
+def _diff_instrucao(antes: str, depois: str) -> tuple[list[str], list[str]]:
+    import difflib
+    a, d = antes.splitlines(), depois.splitlines()
+    sai = [ln for ln in difflib.ndiff(a, d) if ln.startswith("- ") and ln[2:].strip()]
+    entra = [ln for ln in difflib.ndiff(a, d) if ln.startswith("+ ") and ln[2:].strip()]
+    return [ln[2:] for ln in sai], [ln[2:] for ln in entra]
+
+
+def comparar(antes: Versao | None, depois: Versao) -> None:
+    """Mostra o que muda de uma versão para a outra, lido dos agentes construídos: prompt, ferramentas,
+    saída estruturada, callbacks e execução. Com `antes=None`, mostra a ficha completa de `depois`."""
+    fd, ed = _ficha(depois)
+    fa, ea = _ficha(antes) if antes is not None else ({}, {})
+    html_partes, texto = [], []
+
+    def linha(sinal: str, conteudo: str, cor: str) -> None:
+        html_partes.append(f"<div style='font-family:monospace;white-space:pre-wrap;color:{cor}'>{sinal} {html.escape(conteudo)}</div>")
+        texto.append(f"{sinal} {conteudo}")
+
+    def titulo(t: str) -> None:
+        html_partes.append(f"<div style='margin-top:6px'><b>{html.escape(t)}</b></div>")
+        texto.append(t)
+
+    def bloco(sinal: str, linhas: list[str], cor: str, rotulo: str) -> None:
+        mostradas = linhas if len(linhas) <= 6 else linhas[:4]
+        for ln in mostradas:
+            linha(sinal, ln, cor)
+        if len(linhas) > len(mostradas):
+            resto = linhas[len(mostradas):]
+            corpo = "".join(f"<div style='font-family:monospace;white-space:pre-wrap;color:{cor}'>{sinal} {html.escape(ln)}</div>" for ln in resto)
+            html_partes.append(f"<details><summary>{sinal} mais {len(resto)} linhas {rotulo}</summary>{corpo}</details>")
+            texto.append(f"{sinal} … mais {len(resto)} linhas {rotulo}")
+
+    verde, vermelho, cinza = "#1a7f37", "#cf222e", "#6e7781"
+    if antes is not None:
+        titulo("Componentes")
+        for c in sorted(depois.componentes - antes.componentes):
+            linha("+", f"{c}: {DESCRICOES.get(c, '')}", verde)
+        for c in sorted(antes.componentes - depois.componentes):
+            linha("−", f"{c}: {DESCRICOES.get(c, '')}", vermelho)
+
+    mudou_agente = False
+    for nome in list(dict.fromkeys([*fa, *fd])):
+        a, d = fa.get(nome), fd.get(nome)
+        if a == d:
+            continue
+        mudou_agente = True
+        titulo(f"Agente {nome}" + (" (novo)" if a is None else " (removido)" if d is None else ""))
+        a = a or {k: ("" if k == "instrução" else [] if k == "ferramentas" else "—") for k in (d or {})}
+        d = d or {k: ("" if k == "instrução" else [] if k == "ferramentas" else "—") for k in a}
+        if a["instrução"] != d["instrução"]:
+            sai, entra = _diff_instrucao(a["instrução"], d["instrução"])
+            linha("", "prompt:", cinza)
+            bloco("−", sai, vermelho, "saem do prompt")
+            bloco("+", entra, verde, "entram no prompt")
+        if a["ferramentas"] != d["ferramentas"]:
+            linha("", "ferramentas:", cinza)
+            for f in d["ferramentas"]:
+                if f not in a["ferramentas"]:
+                    linha("+", f, verde)
+            for f in a["ferramentas"]:
+                if f not in d["ferramentas"]:
+                    linha("−", f, vermelho)
+            iguais = [f for f in d["ferramentas"] if f in a["ferramentas"]]
+            if iguais:
+                linha(" ", "iguais: " + ", ".join(iguais), cinza)
+        for campo in ["saída estruturada", *_CALLBACKS]:
+            if a.get(campo) != d.get(campo):
+                linha("", f"{campo}: {a.get(campo)} → {d.get(campo)}", verde)
+    if antes is not None and not mudou_agente:
+        titulo("Agente")
+        linha(" ", "igual: mesmo prompt, mesmas ferramentas, mesmos callbacks", cinza)
+
+    mudancas = {k: (ea.get(k), v) for k, v in ed.items() if ea.get(k) != v} if antes is not None else {k: (None, v) for k, v in ed.items()}
+    if mudancas:
+        titulo("Execução")
+        for k, (va, vd) in mudancas.items():
+            linha("", f"{k}: {va} → {vd}" if va is not None else f"{k}: {vd}", verde if va is not None else cinza)
+
+    cab = f"O que muda: <code>{html.escape(antes.nome)}</code> → <code>{html.escape(depois.nome)}</code>" if antes is not None \
+        else f"Ficha de <code>{html.escape(depois.nome)}</code>"
+    _exibir(f"<div style='border-left:3px solid {cinza};padding-left:8px'><b>{cab}</b>{''.join(html_partes)}</div>",
+            ((f"O que muda: {antes.nome} → {depois.nome}" if antes is not None else f"Ficha de {depois.nome}") + "\n" + "\n".join(texto)))
+
+
 def verificar(condicao: bool, mensagem: str) -> None:
     marca = "✅" if condicao else "❌"
     _exibir(f"<div>{marca} {html.escape(mensagem)}</div>", f"{marca} {mensagem}")

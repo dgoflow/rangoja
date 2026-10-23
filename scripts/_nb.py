@@ -12,7 +12,7 @@ SETUP = '''from rangoja import config, dados, falhas, ferramentas, controle, obs
 from rangoja.armazem import Armazem
 from rangoja.casos import caso
 from rangoja.execucao import atender, continuar, aprovar, recusar, expirar_pendencias, reiniciar_runner, estado_persistido
-from rangoja.notebook import (preparar_ambiente, preparar_secao, mostrar, verificar, verificar_falha,
+from rangoja.notebook import (preparar_ambiente, preparar_secao, mostrar, comparar, verificar, verificar_falha,
                               resumo, amostra, matriz)
 from rangoja.trajetoria import chamou, ferramenta_antes, contar_chamadas
 from rangoja.versoes import v0, v1, v2, v3, montar
