@@ -150,82 +150,111 @@ print("reembolsos registrados:", reembolsos, "| preço do refrigerante no pedido
            "Ter ferramentas disponíveis **não garante** que o modelo as use. "
            "Isso muda nas próximas seções: com a decisão estruturada (N1.4) e o estado da conversa (N1.5), a versão de falha da N1.6 consultou o pedido em 5 de 6 execuções; com o contexto enxuto, em 6 de 6. Com 6 amostras, não dá para separar o efeito de cada componente."),
 
-        md("## N1.3 — O loop por baixo\n\nUm agente é um loop: o modelo pede uma ferramenta, a ferramenta responde, o modelo decide o próximo passo ou responde. Os eventos do ADK mostram isso."),
+        md("## N1.3 — O loop por baixo\n\n"
+           "Um agente é um loop: o modelo pede uma ferramenta, o sistema a executa e devolve o resultado, o modelo decide o próximo passo ou responde. "
+           "`anatomia` mostra esse vaivém a partir dos eventos do ADK, na mesma resposta gravada da N1.2."),
         code('''from rangoja.observabilidade import anatomia
-s = preparar_secao("N1.3")
-a = atender(s.correcao, s.caso, gravacao="N1.2/correcao")
-print(anatomia(a))
-passos = [ev for ev in a.eventos if ev.content and ev.content.parts]
-verificar(len(passos) >= 2, "há pelo menos dois passos: o modelo age e o sistema responde")'''),
 
-        md("## N1.4 — Prosa × estrutura\n\nCaso `C02` (atraso). O agente decide em **prosa**: o código não tem como extrair categoria e valor. A correção é um **contrato**: a decisão é estruturada (`Decisao`) e a resposta ao cliente continua em texto."),
-        md("**O que muda da falha para a correção**, lido dos próprios agentes que o ADK vai rodar:"),
-        code('''s = preparar_secao("N1.4")
-comparar(s.falha, s.correcao)'''),
-        code('''falha = atender(s.falha, s.caso, gravacao=s.gravacoes["falha"])
-resumo(falha); amostra(s.gravacoes["falha"])
-verificar_falha(falha, falha.decisao is None, "em prosa, o código não recebe uma decisão utilizável")'''),
-        code('''from rangoja import tipos
-mostrar(tipos.Decisao)
-correcao = atender(s.correcao, s.caso, gravacao=s.gravacoes["correcao"])
-resumo(correcao); amostra(s.gravacoes["correcao"])
-verificar_falha(correcao, correcao.decisao is not None, "a decisão agora é um objeto tipado")
-verificar_falha(correcao, correcao.decisao.solucao in __import__("rangoja.politica", fromlist=["x"]).solucoes_permitidas(correcao.decisao.categoria),
-                "a solução decidida existe na política para a categoria")'''),
-        md("Nota: com a API do ADK, a saída estruturada chega por uma ferramenta interna (`set_model_response`). Ela aparece nos eventos e é ignorada nas funções de trajetória."),
+com_ferramentas = v0.com("ferramentas")
+Armazem.reset()  # banco de pedidos e reembolsos limpo para esta seção
+resultado = atender(com_ferramentas, caso("C01"), gravacao="N1.2/correcao")  # a resposta que o gpt-4o-mini deu quando gravamos
+print(anatomia(resultado))'''),
 
-        md("## N1.5 — Estado da conversa\n\nCaso `C11`: três mensagens (sem pedido → o 4822, faltou o refri → \"e a sobremesa também\"). Sem estado, cada mensagem abre uma sessão nova."),
-        md("**O que muda da falha para a correção**, lido dos próprios agentes que o ADK vai rodar:"),
-        code('''s = preparar_secao("N1.5")
-comparar(s.falha, s.correcao)'''),
-        code('''falha = atender(s.falha, s.caso, gravacao=s.gravacoes["falha"])
-resumo(falha); amostra(s.gravacoes["falha"])
-print("estado da última sessão (sem estado):", {k: v for k, v in falha.estado.items() if k in ("pedido_id", "compensacoes")})'''),
-        code('''correcao = atender(s.correcao, s.caso, gravacao=s.gravacoes["correcao"])
-resumo(correcao); amostra(s.gravacoes["correcao"])
-print("estado da sessão (com estado):", {k: v for k, v in correcao.estado.items() if k in ("pedido_id", "compensacoes")})
-verificar_falha(correcao, correcao.estado.get("pedido_id") == "4822", "o estado guardou o pedido da conversa")
-verificar_falha(falha, falha.estado.get("pedido_id") != "4822", "sem estado, a última sessão não sabe qual é o pedido")'''),
+        md("## N1.4 — Prosa × estrutura\n\n"
+           "Caso `C02` (atraso). Até aqui o agente decide em **prosa**: o código não tem como extrair a categoria e o valor da decisão. "
+           "A correção é um **contrato**: a decisão sai num formato fixo (`Decisao`), e a mensagem ao cliente vai dentro dela, em texto. O que muda:"),
+        code('''sem_schema = v0.com("ferramentas")
+com_schema = sem_schema.com("schema")
+comparar(sem_schema, com_schema)'''),
+        code('''Armazem.reset()
+em_prosa = atender(sem_schema, caso("C02"), gravacao="N1.4/falha")  # a resposta que o gpt-4o-mini deu quando gravamos
+resumo(em_prosa)
+print("decisão que o código recebe:", em_prosa.decisao)'''),
+        md("Este é o formato que a decisão passa a ter. O ADK o envia ao modelo e valida a resposta contra ele:"),
+        code('''from rangoja.politica import solucoes_permitidas
+from rangoja.tipos import Decisao
+mostrar(Decisao)
+
+Armazem.reset()
+estruturada = atender(com_schema, caso("C02"), gravacao="N1.4/correcao")
+resumo(estruturada)
+d = estruturada.decisao
+print("categoria:", d.categoria, "| solução:", d.solucao, "| valor:", d.valor)
+verificar(d.solucao in solucoes_permitidas(d.categoria), "o código consegue conferir a decisão: a solução existe na política para a categoria")'''),
+        md("Nota: no ADK, a saída estruturada chega por uma ferramenta interna (`set_model_response`). Ela aparece nos eventos, mas não conta como ferramenta do atendimento."),
+
+        md("## N1.5 — Estado da conversa\n\n"
+           "Caso `C11`: três mensagens do mesmo cliente. Sem estado, cada mensagem abre uma sessão nova, e o agente esquece o que veio antes. "
+           "Aqui a mudança não está no agente, e sim em como a conversa roda:"),
+        code('''sem_estado = v0.com("ferramentas", "schema")
+com_estado = sem_estado.com("estado")
+comparar(sem_estado, com_estado)
+
+conversa = caso("C11")
+for i, mensagem in enumerate(conversa.atendimentos[0], 1):
+    print(f"mensagem {i}: {mensagem}")'''),
+        code('''Armazem.reset()
+esquece = atender(sem_estado, conversa, gravacao="N1.5/falha")  # a resposta que o gpt-4o-mini deu quando gravamos
+resumo(esquece)
+print("o que a última sessão sabe:", {k: v for k, v in esquece.estado.items() if k in ("pedido_id", "compensacoes")})'''),
+        code('''Armazem.reset()
+lembra = atender(com_estado, conversa, gravacao="N1.5/correcao")
+resumo(lembra); amostra("N1.5/correcao")
+print("o que a sessão sabe:", {k: v for k, v in lembra.estado.items() if k in ("pedido_id", "compensacoes")})
+verificar(lembra.estado.get("pedido_id") == "4822", "com estado, a sessão guardou o pedido da conversa")'''),
 
         md("## N1.6 — O que entra no contexto\n\n"
-           "Caso `C01`, agora quase na `v1`: ferramentas, decisão estruturada e estado, mas **sem o contexto enxuto**. "
-           "`buscar_pedido` devolve o pedido inteiro, inclusive os dados do entregador, que o modelo não precisa para decidir."),
-        md("**O que muda da falha para a correção**, lido dos próprios agentes que o ADK vai rodar:"),
-        code('''s = preparar_secao("N1.6")
-comparar(s.falha, s.correcao)'''),
-        code('''falha = atender(s.falha, s.caso, gravacao=s.gravacoes["falha"])
-resumo(falha); amostra(s.gravacoes["falha"])
-buscas = [c for c in falha.trajetoria if c.ferramenta == "buscar_pedido"]
+           "Caso `C01` de novo. O agente já tem ferramentas, decisão estruturada e estado, mas `buscar_pedido` devolve **o pedido inteiro**, "
+           "inclusive os dados do entregador, que o modelo não precisa para decidir. A correção é o **contexto enxuto**:"),
+        code('''sem_enxuto = v0.com("ferramentas", "schema", "estado")
+enxuto = sem_enxuto.com("contexto_enxuto")
+comparar(sem_enxuto, enxuto)'''),
+        code('''Armazem.reset()
+completo = atender(sem_enxuto, caso("C01"), gravacao="N1.6/falha")  # a resposta que o gpt-4o-mini deu quando gravamos
+resumo(completo); amostra("N1.6/falha")
+buscas = [c for c in completo.trajetoria if c.ferramenta == "buscar_pedido"]
 if buscas:
     print("o que o modelo recebeu sobre o entregador:", buscas[0].resultado.get("entregador"))
-    verificar_falha(falha, "entregador" in buscas[0].resultado, "nome, telefone e placa do entregador entraram no contexto do modelo")
 else:
     print("nesta execução o modelo não consultou o pedido")'''),
         md("**A resposta está certa, e é por isso que o problema passa despercebido.** O dado do entregador não aparece na resposta, mas está no contexto: o modelo pode repeti-lo a qualquer momento. "
            "Em N2.3 simulamos esse vazamento (nas 10 execuções reais, o modelo não vazou) e vemos o guardrail de saída barrá-lo. "
            "Aqui a correção vem antes: a ferramenta devolve só o que a decisão precisa."),
-        code('''correcao = atender(s.correcao, s.caso, gravacao=s.gravacoes["correcao"])
-resumo(correcao); amostra(s.gravacoes["correcao"])
-buscas = [c for c in correcao.trajetoria if c.ferramenta == "buscar_pedido"]
+        code('''Armazem.reset()
+so_o_necessario = atender(enxuto, caso("C01"), gravacao="N1.6/correcao")
+resumo(so_o_necessario); amostra("N1.6/correcao")
+buscas = [c for c in so_o_necessario.trajetoria if c.ferramenta == "buscar_pedido"]
 if buscas:
-    print("campos devolvidos ao modelo (versão enxuta):", sorted(buscas[0].resultado.keys()))
-    verificar_falha(correcao, "entregador" not in buscas[0].resultado, "com o contexto enxuto, nenhum dado do entregador chega ao modelo")
+    print("campos que o modelo recebeu:", sorted(buscas[0].resultado.keys()))
+    verificar("entregador" not in buscas[0].resultado, "com o contexto enxuto, nenhum dado do entregador chega ao modelo")
 else:
     print("nesta execução o modelo não consultou o pedido")'''),
 
-        md("## N1.7 — Lembrar do cliente\n\nCaso `C13`: dois atendimentos do mesmo cliente. No primeiro ele diz que prefere a entrega na portaria. Sem memória, o segundo atendimento não sabe."),
-        md("**O que muda da falha para a correção**, lido dos próprios agentes que o ADK vai rodar:"),
-        code('''s = preparar_secao("N1.7")
-comparar(s.falha, s.correcao)'''),
-        code('''falha = atender(s.falha, s.caso, gravacao=s.gravacoes["falha"])
-resumo(falha); amostra(s.gravacoes["falha"])
-verificar_falha(falha, "portaria" not in (falha.resposta or "").lower(), "sem memória, o segundo atendimento não menciona a portaria")'''),
-        code('''mostrar(ferramentas.anotar_observacao)
-correcao = atender(s.correcao, s.caso, gravacao=s.gravacoes["correcao"])
-resumo(correcao); amostra(s.gravacoes["correcao"])
-print("observações guardadas para o cliente:", correcao.estado.get("user:observacoes"))
-verificar_falha(correcao, "portaria" in (correcao.resposta or "").lower(), "com memória, o agente usa a preferência")'''),
-        md("Atenção: **memória livre é uma porta de entrada**. No NB02 vemos o cliente usá-la para gravar um direito que não tem."),
+        md("## N1.7 — Lembrar do cliente\n\n"
+           "Caso `C13`: dois atendimentos do mesmo cliente, em dias diferentes. No primeiro ele diz que prefere a entrega na portaria. "
+           "Sem memória, o segundo atendimento não sabe disso. A correção é uma **memória do cliente** (estado com o prefixo `user:`, que atravessa as sessões):"),
+        code('''sem_memoria = v0.com("ferramentas", "schema", "estado", "contexto_enxuto")
+com_memoria = sem_memoria.com("memoria_livre")  # esta é a v1
+comparar(sem_memoria, com_memoria)
+
+cliente = caso("C13")
+for i, mensagens in enumerate(cliente.atendimentos, 1):
+    print(f"atendimento {i}: {mensagens}")'''),
+        code('''Armazem.reset()
+esquece = atender(sem_memoria, cliente, gravacao="N1.7/falha")  # a resposta que o gpt-4o-mini deu quando gravamos
+resumo(esquece)
+print("o segundo atendimento menciona a portaria?", "portaria" in (esquece.resposta or "").lower())'''),
+        md("A memória entra por uma ferramenta nova, `anotar_observacao`: o modelo decide o que anotar, e o texto é gravado em `user:observacoes`, "
+           "que volta no prompt do próximo atendimento (`{user:observacoes?}`). É isto que o modelo recebe sobre ela:"),
+        code('''from google.adk.tools import FunctionTool
+print(FunctionTool(ferramentas.anotar_observacao)._get_declaration().model_dump_json(exclude_none=True, indent=1))'''),
+        code('''Armazem.reset()
+lembra = atender(com_memoria, cliente, gravacao="N1.7/correcao")
+resumo(lembra); amostra("N1.7/correcao")
+print("observações guardadas para o cliente:", lembra.estado.get("user:observacoes"))
+verificar("portaria" in (lembra.resposta or "").lower(), "com memória, o segundo atendimento usa a preferência")'''),
+        md("A taxa acima importa: com memória, o modelo **pode** usar a preferência, mas fez isso em poucas das execuções reais. "
+           "E **memória livre é uma porta de entrada**: no NB02 vemos o cliente usá-la para gravar um direito que não tem."),
 
         md("## N1.8 — Recapitulação\n\n| Problema | Componente | Onde |\n|---|---|---|\n| O modelo inventa fatos | `ferramentas` | `rangoja/ferramentas.py` |\n| Decisão em prosa | `schema` | `rangoja/tipos.py` (`Decisao`) |\n| A conversa se perde | `estado` | `session.state` |\n| Contexto cheio de dados que não servem | `contexto_enxuto` | `ferramentas._resumo_enxuto` |\n| O agente não lembra do cliente | `memoria_livre` | `user:observacoes` |\n\n**Ponte para o NB02:** o agente agora age e lembra. Nada ainda o impede de agir mal."),
     ]

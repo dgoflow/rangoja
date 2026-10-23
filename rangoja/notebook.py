@@ -356,14 +356,24 @@ def resumo(a: Any) -> None:
     _exibir(corpo, texto)
 
 
+CRITERIOS = {  # os critérios de scripts/gravar_secoes.py, ditos para quem lê o notebook
+    "consultou": "o modelo consultou o pedido",
+    "consulta_unica": "o modelo consultou o pedido uma única vez",
+    "consulta_repetida": "o modelo consultou o pedido mais de uma vez",
+    "consulta_e_valor_real": "o modelo consultou o pedido e reembolsou o valor real do item",
+    "sem_portaria": "a resposta não menciona a portaria",
+    "menciona_portaria": "a resposta menciona a portaria",
+}
+
+
 def amostra(nome_gravacao: str) -> None:
     """Diz de onde vem uma gravação: modelo, data e, se houver, a taxa do critério de escolha."""
     import json
     caminho = config.GRAVACOES / f"{nome_gravacao}.json"
     meta = json.loads(caminho.read_text(encoding="utf-8"))
-    partes = [f"gravação <code>{nome_gravacao}</code>: modelo <b>{meta.get('modelo', '?')}</b> em {meta.get('gravada_em', '?')[:10]}"]
+    partes = [f"resposta gravada do <b>{meta.get('modelo', '?')}</b> em {meta.get('gravada_em', '?')[:10]} (<code>{nome_gravacao}</code>)"]
     am = meta.get("amostra")
     if am:
-        partes.append(f"escolhida entre {am['tentativas']} execuções; critério <i>{am['criterio']}</i> satisfeito em "
-                      f"<b>{am['satisfizeram']} de {am['tentativas']}</b>")
+        o_que = CRITERIOS.get(am["criterio"], am["criterio"])
+        partes.append(f"de <b>{am['tentativas']}</b> execuções reais, em <b>{am['satisfizeram']}</b> {o_que}")
     _exibir("<small>" + " · ".join(partes) + "</small>", " | ".join(partes))

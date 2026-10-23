@@ -10,11 +10,12 @@ from dataclasses import dataclass, field
 from .versoes import Versao, montar, v0, v1, v2, v3
 
 # ---- NB01: v0 -> v1
+# cada seção acrescenta um componente à anterior, como as células do notebook mostram
 N12 = montar(v0, com=["ferramentas"])
 N14 = N12.com("schema")
-N15F = v1.sem("estado", "contexto_enxuto", "memoria_livre")
-N15C = v1.sem("contexto_enxuto", "memoria_livre")
-N16C = v1.sem("memoria_livre")
+N15F = N14                           # sem estado
+N15C = N14.com("estado")
+N16C = N15C.com("contexto_enxuto")   # N16C + memoria_livre = v1
 
 # ---- NB02: v1 -> v2
 N21 = montar(v1, com=["aprovacao"])
