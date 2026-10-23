@@ -106,32 +106,45 @@ async for evento in runner.run_async(user_id="101", session_id=sessao.id, new_me
            "- **Nada foi feito.** O cliente leu \"reembolso\", mas não existe reembolso no sistema: o agente tem zero ferramentas. Ao vivo, o modelo às vezes ainda diz que está \"processando\".\n"
            "- **O código não tem o que executar.** A saída é texto: não há categoria nem valor que um sistema possa ler e cumprir.\n\n"
            "Funciona na demo. Não funciona em produção."),
-        md("Daqui em diante, um **atalho**. `atender(versao, caso)` monta este mesmo agente e roda este mesmo `Runner`, "
-           "mas devolve o resultado organizado em campos que o código pode verificar. "
-           "`preparar_secao` escolhe o caso e a versão de cada seção e usa a gravação dela, para a lição aparecer sempre, mesmo em `live`."),
-        code('''s = preparar_secao("N1.1")
-agente_v0 = s.falha.construir().agente_raiz
-verificar(agente_v0.instruction == PROMPT and not agente_v0.tools and agente_v0.output_schema is None,
-          "atender(v0, ...) monta o mesmo agente: mesmo PROMPT, sem ferramentas, sem schema")
-falha = atender(s.falha, s.caso, gravacao=s.gravacoes["falha"])
-print("status:    ", falha.status)
-print("decisão:   ", falha.decisao)     # None: não há decisão que o código possa ler
-print("trajetória:", falha.trajetoria)  # []: nenhuma ferramenta foi chamada
-print("fonte:     ", falha.fonte)       # de onde veio a resposta: gravação, live ou cache'''),
+        md("Daqui em diante usamos um **atalho**: `atender(agente, caso)` faz o que as duas células acima fizeram "
+           "(monta o agente e roda o `Runner`) e devolve o resultado em campos que o código pode verificar. "
+           "Sem chave de API, `gravacao=` diz qual resposta gravada do modelo usar no lugar da OpenAI."),
+        code('''from rangoja.casos import caso
+from rangoja.versoes import v0  # v0 = o agente que montamos acima: só o prompt, sem ferramentas
+
+verificar(v0.construir().agente_raiz.instruction == PROMPT, "v0 é o agente montado acima (mesmo prompt)")
+
+cliente = caso("C01")  # cliente 101, pedido 4821: "Meu pedido 4821 chegou frio e faltou o refri."
+resultado = atender(v0, cliente, gravacao="N1.1/falha")  # a resposta que o gpt-4o-mini deu quando gravamos
+print("decisão:             ", resultado.decisao)     # None: nada que o código possa ler
+print("ferramentas chamadas:", resultado.trajetoria)  # []: o agente não consultou nem registrou nada
+print("resposta veio de:    ", resultado.fonte)'''),
         md("O modelo só sabe o que está no contexto. Texto plausível não é fato. Como dar fatos ao modelo? **Ferramentas.**"),
 
-        md("## N1.2 — Ferramentas trazem fatos\n\nA mesma reclamação, agora com ferramentas (`buscar_pedido`, `consultar_politica`, cupom, reembolso…). A docstring e os tipos de cada função são o que o modelo lê."),
-        md("**O que muda da falha para a correção**, lido dos próprios agentes que o ADK vai rodar:"),
-        code('''s = preparar_secao("N1.2")
-comparar(s.falha, s.correcao)'''),
-        code('''mostrar(ferramentas._fabrica_buscar_pedido(enxuta=True))
-correcao = atender(s.correcao, s.caso, gravacao=s.gravacoes["correcao"])
-resumo(correcao)
-amostra(s.gravacoes["correcao"])'''),
-        code('''registrados = [c.args.get("valor") for c in correcao.trajetoria if c.ferramenta == "registrar_reembolso"]
-print("consultou o pedido?", chamou(correcao.trajetoria, "buscar_pedido"))
-print("reembolsos registrados:", registrados, "| valor real do refrigerante: R$ 8,00")
-verificar_falha(correcao, correcao.erro is None and bool(correcao.trajetoria), "com ferramentas, o agente passou a agir no sistema")'''),
+        md("## N1.2 — Ferramentas trazem fatos\n\n"
+           "A mesma reclamação. Agora o agente ganha **ferramentas**: funções Python que o modelo pode pedir para executar, "
+           "como `buscar_pedido` e `registrar_reembolso`. Primeiro, o que muda de um agente para o outro, lido dos próprios agentes:"),
+        code('''sem_ferramentas = v0
+com_ferramentas = v0.com("ferramentas")
+comparar(sem_ferramentas, com_ferramentas)'''),
+        md("Uma ferramenta é uma função Python comum. O modelo não vê o código: o ADK envia a ele só o **nome, a descrição (a docstring) e os parâmetros**, "
+           "e o modelo decide se pede para chamá-la. É isto que ele recebe:"),
+        code('''from google.adk.tools import FunctionTool
+
+ferramentas_do_agente = {f.__name__: f for f in com_ferramentas.construir().agente_raiz.tools}
+for nome, funcao in ferramentas_do_agente.items():
+    print(f"{nome:22s} {funcao.__doc__}")
+
+print("\\no que o ADK envia ao modelo sobre buscar_pedido:")
+print(FunctionTool(ferramentas_do_agente["buscar_pedido"])._get_declaration().model_dump_json(exclude_none=True, indent=1))'''),
+        md("Agora o atendimento. As ferramentas agem num banco de pedidos e reembolsos; começamos com ele limpo."),
+        code('''Armazem.reset()  # banco de pedidos e reembolsos limpo para esta seção
+resultado = atender(com_ferramentas, caso("C01"), gravacao="N1.2/correcao")  # a resposta que o gpt-4o-mini deu quando gravamos
+resumo(resultado)
+
+reembolsos = [c.args.get("valor") for c in resultado.trajetoria if c.ferramenta == "registrar_reembolso"]
+print("consultou o pedido antes de agir?", chamou(resultado.trajetoria, "buscar_pedido"))
+print("reembolsos registrados:", reembolsos, "| preço do refrigerante no pedido: R$ 8,00")'''),
         md("**Achado das gravações:** ter ferramentas disponíveis **não garante** que o modelo as use para consultar os fatos. Nesta configuração (política colada na instrução, resposta em texto), nenhuma das 6 execuções gravadas consultou o pedido, e os valores que o modelo registrou não batem com ele. "
            "Isso muda nas próximas seções: com a decisão estruturada (N1.4) e o estado da conversa (N1.5), a versão de falha da N1.6 consultou o pedido em 5 de 6 execuções; com o contexto enxuto, em 6 de 6. Com 6 amostras, não dá para separar o efeito de cada componente."),
 
