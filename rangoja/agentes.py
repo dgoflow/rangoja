@@ -13,8 +13,9 @@ from .tipos import Decisao, Triagem
 
 NOME_RAIZ = "atendimento"
 BASE = "Você atende clientes do RangoJá, um app de delivery. Responda em português, com cordialidade e objetividade."
-INSTRUCAO_FERRAMENTAS = (
-    "Consulte os fatos com as ferramentas antes de decidir. Nunca invente valores de pedido. "
+INSTRUCAO_FERRAMENTAS = "Consulte os fatos com as ferramentas antes de decidir. Nunca invente valores de pedido."
+# Só faz sentido com o componente `schema`: sem ele, o agente não tem decisão estruturada para entregar.
+INSTRUCAO_SCHEMA = (
     "Sua resposta final é SEMPRE a decisão estruturada, nunca texto livre. Se faltar informação "
     "(ex.: o número do pedido) use categoria 'indefinida' e solucao 'pedir_informacao'; se o assunto "
     "não for do RangoJá use categoria 'fora_do_escopo' e solucao 'nenhuma'. Escreva o que o cliente "
@@ -32,8 +33,8 @@ def _instrucao_unica(c: frozenset[str]) -> str:
         partes.append("Política de atendimento:\n" + _politica_texto())
     else:
         partes.append("Consulte a política com `consultar_politica` quando precisar.")
-    if "ferramentas" in c:
-        partes.append(INSTRUCAO_FERRAMENTAS)
+    if "ferramentas" in c:  # com schema, o texto é o mesmo de antes da separação (uma frase seguida da outra)
+        partes.append(INSTRUCAO_FERRAMENTAS + (" " + INSTRUCAO_SCHEMA if "schema" in c else ""))
     if "memoria_livre" in c:
         partes.append("Preferências e observações do cliente: {user:observacoes?}")
     if "memoria_segura" in c:
@@ -131,7 +132,7 @@ def construir(c: frozenset[str]) -> Construida:
         model=_modelo("resolucao", c),
         instruction=(
             "Com a triagem em {triagem?}, decida a solução permitida usando as ferramentas. "
-            + INSTRUCAO_FERRAMENTAS
+            + INSTRUCAO_FERRAMENTAS + " " + INSTRUCAO_SCHEMA
         ),
         tools=ferr,
         output_schema=Decisao,

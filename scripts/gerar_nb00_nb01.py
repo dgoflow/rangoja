@@ -145,7 +145,9 @@ resumo(resultado)
 reembolsos = [c.args.get("valor") for c in resultado.trajetoria if c.ferramenta == "registrar_reembolso"]
 print("consultou o pedido antes de agir?", chamou(resultado.trajetoria, "buscar_pedido"))
 print("reembolsos registrados:", reembolsos, "| preço do refrigerante no pedido: R$ 8,00")'''),
-        md("**Achado das gravações:** ter ferramentas disponíveis **não garante** que o modelo as use para consultar os fatos. Nesta configuração (política colada na instrução, resposta em texto), nenhuma das 6 execuções gravadas consultou o pedido, e os valores que o modelo registrou não batem com ele. "
+        md("**O prompt pede, o modelo não obedece, e o código não percebe.** O prompt ganhou a frase *\"Consulte os fatos com as ferramentas antes de decidir. Nunca invente valores de pedido.\"* "
+           "e o agente tem `buscar_pedido`. Mesmo assim, nenhuma das 6 execuções gravadas consultou o pedido, e nesta o modelo registrou R$ 5 de reembolso por um refrigerante de R$ 8. "
+           "Ter ferramentas disponíveis **não garante** que o modelo as use. "
            "Isso muda nas próximas seções: com a decisão estruturada (N1.4) e o estado da conversa (N1.5), a versão de falha da N1.6 consultou o pedido em 5 de 6 execuções; com o contexto enxuto, em 6 de 6. Com 6 amostras, não dá para separar o efeito de cada componente."),
 
         md("## N1.3 — O loop por baixo\n\nUm agente é um loop: o modelo pede uma ferramenta, a ferramenta responde, o modelo decide o próximo passo ou responde. Os eventos do ADK mostram isso."),
