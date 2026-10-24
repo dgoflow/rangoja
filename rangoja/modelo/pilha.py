@@ -132,6 +132,11 @@ async def _ao_vivo(modelo: ModeloRangoja, requisicao: Any) -> LlmResponse:
     from google.adk.models.lite_llm import LiteLlm
     ia = LiteLlm(model=f"openai/{nome}")
     requisicao.model = f"openai/{nome}"  # o LiteLlm usa o modelo da requisição, não o seu
+    temperatura = contexto.atual().temperatura
+    if temperatura is not None:  # `atender(..., temperatura=0.0)`: o LiteLlm lê de config.temperature
+        if requisicao.config is None:
+            requisicao.config = types.GenerateContentConfig()
+        requisicao.config.temperature = temperatura
     final = await _uma_chamada(ia, requisicao)
     # O ADK entrega a saída estruturada por uma ferramenta (`set_model_response`). Se o modelo
     # responde em prosa em vez de chamá-la, pede de novo (até 2 vezes) em vez de quebrar o fluxo.

@@ -19,7 +19,8 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
         return
     marcador = pytest.mark.skip(reason="teste live: requer RANGOJA_MODO=live ou record e chave de API (.env)")
     for item in items:
-        if "live" in item.keywords:
+        # o marcador, não a palavra-chave: um parâmetro chamado "live" (ex.: test_modos[live]) também vira palavra-chave
+        if item.get_closest_marker("live"):
             item.add_marker(marcador)
 
 

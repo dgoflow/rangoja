@@ -71,3 +71,18 @@ def test_esperar_afirma_com_gravacao_e_so_avisa_ao_vivo(capsys, monkeypatch):
     saida = capsys.readouterr().out
     assert "⚠️ isso aconteceu: não se confirmou desta vez" in saida
     assert "✅ isso aconteceu (modelo ao vivo)" in saida
+
+
+@pytest.mark.parametrize("temperatura", [None, 0.0])
+def test_temperatura_chega_ao_modelo_ao_vivo(monkeypatch, temperatura):
+    """`atender(..., temperatura=...)` (N4.8) precisa chegar à requisição que o LiteLlm envia."""
+    recebidas = []
+
+    async def chamada(ia, requisicao):
+        recebidas.append(requisicao.config.temperature if requisicao.config else None)
+        return LlmResponse(content=types.Content(role="model", parts=[types.Part(text="ok")]))
+
+    monkeypatch.setattr(pilha, "_uma_chamada", chamada)
+    monkeypatch.setenv("RANGOJA_MODO", "live")
+    atender(v0, caso("C01"), temperatura=temperatura)
+    assert recebidas == [temperatura]

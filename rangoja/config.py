@@ -39,7 +39,8 @@ def diagnostico_chave() -> str:
         return f"chave presente ({len(os.environ['OPENAI_API_KEY'])} caracteres); modo {modo()}"
     env = RAIZ / ".env"
     if not env.exists():
-        return f"sem chave e sem arquivo {env}; rode config.configurar_chave() ou crie o .env"
+        # caminho relativo: a mensagem fica salva nas saídas dos notebooks e não deve trazer a pasta de quem os executou
+        return "sem chave e sem arquivo .env na raiz do projeto; rode config.configurar_chave() ou crie o .env"
     linhas = env.read_text(encoding="utf-8").splitlines()
     if any(ln.strip().startswith("OPENAI_API_KEY=") and ln.split("=", 1)[1].strip() for ln in linhas):
         return "o .env tem a chave, mas este kernel não a leu: reinicie o kernel e rode a primeira célula"
@@ -133,7 +134,8 @@ def configurar_chave(chave: str | None = None, salvar: bool | None = None, arqui
             salvar = False
     if salvar:
         destino = gravar_env({"OPENAI_API_KEY": chave, "RANGOJA_MODO": "live"}, arquivo)
-        msg += f"; salva em {destino} (permissão 600)"
+        onde = destino.relative_to(RAIZ) if destino.is_relative_to(RAIZ) else destino  # sem a pasta de quem roda
+        msg += f"; salva em {onde} (permissão 600)"
     else:
         msg += "; vale só para este notebook (os outros vão pedir de novo)"
     return msg
