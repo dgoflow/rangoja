@@ -93,7 +93,10 @@ async def _fonte_interna(modelo: ModeloRangoja, requisicao: Any) -> LlmResponse:
                 ctx.fontes.append("gravacao")
                 return para_resposta(passo, requisicao)
     else:
-        for nome, origem in (("roteiro", ctx.roteiro), ("gravacao", ctx.gravacao)):
+        # roteiro = resposta escrita à mão (simula uma falha que o modelo real não deu): vale em qualquer modo.
+        # gravação = resposta de um modelo real: é fonte só do replay. Em live e record o modelo responde de verdade.
+        fontes = [("roteiro", ctx.roteiro)] + ([("gravacao", ctx.gravacao)] if ctx.modo == "replay" else [])
+        for nome, origem in fontes:
             if origem is None:
                 continue
             passo = origem.proximo(modelo.agente, requisicao)
@@ -102,8 +105,8 @@ async def _fonte_interna(modelo: ModeloRangoja, requisicao: Any) -> LlmResponse:
                 return para_resposta(passo, requisicao)
 
     caminho = config.CACHE / f"{_chave(requisicao)}.json"
-    # `record` sempre amostra o modelo de novo (senão repetições só reaproveitariam a 1ª resposta)
-    if ctx.modo != "record" and caminho.exists():
+    # o cache também é do replay; `record` sempre amostra o modelo de novo (senão repetições só reaproveitariam a 1ª resposta)
+    if ctx.modo == "replay" and caminho.exists():
         ctx.fontes.append("cache")
         return LlmResponse.model_validate_json(caminho.read_text(encoding="utf-8"))
 

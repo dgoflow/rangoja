@@ -168,6 +168,16 @@ def atender(versao, caso, *, roteiro=None, gravacao=None, cliente_id: str | None
     return ultimo
 
 
+def atender_caso(caso, com, replay=None, *, roteiro=None, cliente_id: str | None = None,
+                 temperatura: float | None = None) -> Atendimento:
+    """Atende um caso do RangoJá com um agente: `atender_caso("C01", com=v0_so_prompt, replay="N1.1/falha")`.
+
+    `caso` é o id (ou o objeto) do catálogo; `com` é a versão do agente; `replay` é a gravação usada em modo
+    `replay`, sem rede e sem chave. Em `live` e `record` ela é ignorada: o modelo responde de verdade.
+    É `atender` com nomes que se leem como frase."""
+    return atender(com, caso, roteiro=roteiro, gravacao=replay, cliente_id=cliente_id, temperatura=temperatura)
+
+
 def _nova_sessao(servico, cliente: str) -> str:
     sid = uuid.uuid4().hex
     _rodar(lambda: servico.create_session(

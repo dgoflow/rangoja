@@ -86,9 +86,9 @@ def preparar_secao(secao_id: str) -> Secao:
     s = Secao(spec.id, spec.caso, spec.falha, spec.correcao, dict(spec.gravacoes),
               dict(spec.casos_extra), spec.roteiro)
     sem_correcao = s.correcao is None
-    texto_falha = f"{s.falha.nome}" if s.falha is not None else "nenhuma"
+    texto_falha = f"{s.falha.titulo}" if s.falha is not None else "nenhuma"
     corpo = (f"**Seção {s.id}**: caso {s.caso}. Versão com o problema: `{texto_falha}`. "
-             + ("Esta seção não tem correção." if sem_correcao else f"Versão corrigida: `{s.correcao.nome}`."))
+             + ("Esta seção não tem correção." if sem_correcao else f"Versão corrigida: `{s.correcao.titulo}`."))
     _exibir(f"<small>{html.escape(corpo.replace('**', '').replace('`', ''))}</small>", corpo.replace("**", "").replace("`", ""))
     return s
 
@@ -266,26 +266,37 @@ def comparar(antes: Versao | None, depois: Versao) -> None:
         for k, (va, vd) in mudancas.items():
             linha("", f"{k}: {va} → {vd}" if va is not None else f"{k}: {vd}", verde if va is not None else cinza)
 
-    cab = f"O que muda: <code>{html.escape(antes.nome)}</code> → <code>{html.escape(depois.nome)}</code>" if antes is not None \
-        else f"Ficha de <code>{html.escape(depois.nome)}</code>"
+    cab = f"O que muda: <code>{html.escape(antes.titulo)}</code> → <code>{html.escape(depois.titulo)}</code>" if antes is not None \
+        else f"Ficha de <code>{html.escape(depois.titulo)}</code>"
     _exibir(f"<div style='border-left:3px solid {cinza};padding-left:8px'><b>{cab}</b>{''.join(html_partes)}</div>",
-            ((f"O que muda: {antes.nome} → {depois.nome}" if antes is not None else f"Ficha de {depois.nome}") + "\n" + "\n".join(texto)))
+            ((f"O que muda: {antes.titulo} → {depois.titulo}" if antes is not None else f"Ficha de {depois.titulo}") + "\n" + "\n".join(texto)))
 
 
-def verificar(condicao: bool, mensagem: str) -> None:
+def afirmar(condicao: bool, mensagem: str) -> None:
+    """Afirma que algo é verdade. Mostra ✅ se for e ❌ se não for, e nesse caso interrompe o notebook (como `assert`).
+    Para o que depende do modelo ao vivo, use `esperar`."""
     marca = "✅" if condicao else "❌"
     _exibir(f"<div>{marca} {html.escape(mensagem)}</div>", f"{marca} {mensagem}")
     assert condicao, mensagem
 
 
-def verificar_falha(atendimento: Any, condicao: bool, mensagem: str) -> None:
-    """Para células de falha: só afirma se a resposta veio de gravação ou roteiro (reproduzível)."""
+def esperar(atendimento: Any, condicao: bool, mensagem: str) -> None:
+    """Espera um resultado que depende do modelo. Com resposta de gravação ou de roteiro (reproduzível),
+    afirma como `afirmar`. Com o modelo ao vivo, que varia entre execuções, só informa: ✅ se aconteceu,
+    ⚠️ se não aconteceu desta vez (sem interromper o notebook)."""
     reproduzivel = bool(atendimento.fonte) and set(atendimento.fonte) <= {"gravacao", "roteiro"}
     if reproduzivel:
-        verificar(condicao, mensagem)
+        afirmar(condicao, mensagem)
+    elif condicao:
+        _exibir(f"<div>✅ {html.escape(mensagem)} <small>(modelo ao vivo)</small></div>", f"✅ {mensagem} (modelo ao vivo)")
     else:
-        aviso = f"⚠️ {mensagem} (não verificado: o modelo ao vivo pode não repetir a falha)"
+        aviso = f"⚠️ {mensagem}: não se confirmou desta vez (o modelo ao vivo varia entre execuções)"
         _exibir(f"<div>{html.escape(aviso)}</div>", aviso)
+
+
+# nomes antigos, que os notebooks 02 a 04 ainda usam
+verificar = afirmar
+conferir = verificar_falha = esperar
 
 
 class Tabela:
@@ -335,6 +346,11 @@ def matriz(arquivo: str, versoes: list[Versao | str]) -> Tabela:
     return Tabela(["teste"] + nomes, linhas)
 
 
+def _titulo(a: Any) -> str:
+    """Nome legível da versão que atendeu (o atendimento guarda só a chave curta)."""
+    return getattr(getattr(a, "_versao", None), "titulo", a.versao)
+
+
 def resumo(a: Any) -> None:
     """Mostra um atendimento: status, decisão, resposta ao cliente e trajetória das ferramentas."""
     d = a.decisao
@@ -346,14 +362,14 @@ def resumo(a: Any) -> None:
     ) or "<tr><td colspan='4'><i>nenhuma ferramenta chamada</i></td></tr>"
     fonte = ", ".join(sorted(set(a.fonte))) or "—"
     corpo = (
-        f"<div><b>{html.escape(a.versao)}</b> · caso {a.caso_id} · status <b>{a.status}</b>"
+        f"<div><b>{html.escape(_titulo(a))}</b> · caso {a.caso_id} · status <b>{a.status}</b>"
         + (f" · <span style='color:#b00'>erro: {html.escape(a.erro[:120])}</span>" if a.erro else "")
         + f"</div><div>decisão: {html.escape(decisao)}</div>"
         f"<div>resposta: <i>{html.escape((a.resposta or '—')[:260])}</i></div>"
         f"<table><tr><th>agente</th><th>ferramenta</th><th>argumentos</th><th>efeito</th></tr>{linhas}</table>"
         f"<div><small>fonte das respostas do modelo: {fonte}</small></div>"
     )
-    texto = f"{a.versao} {a.caso_id} {a.status} | {decisao} | {[c.ferramenta for c in a.trajetoria]}"
+    texto = f"{_titulo(a)} {a.caso_id} {a.status} | {decisao} | {[c.ferramenta for c in a.trajetoria]}"
     _exibir(corpo, texto)
 
 
@@ -368,13 +384,18 @@ CRITERIOS = {  # os critérios de scripts/gravar_secoes.py, ditos para quem lê 
 
 
 def amostra(nome_gravacao: str) -> None:
-    """Diz de onde vem uma gravação: modelo, data e, se houver, a taxa do critério de escolha."""
+    """Diz de onde vem uma gravação: modelo, data e, se houver, a taxa do critério de escolha.
+    Em live ou record, a gravação não é a resposta mostrada: vira a referência para comparar."""
     import json
     caminho = config.GRAVACOES / f"{nome_gravacao}.json"
     meta = json.loads(caminho.read_text(encoding="utf-8"))
-    partes = [f"resposta gravada do <b>{meta.get('modelo', '?')}</b> em {meta.get('gravada_em', '?')[:10]} (<code>{nome_gravacao}</code>)"]
+    data = meta.get("gravada_em", "?")[:10]
+    if config.modo() == "replay":
+        partes = [f"resposta gravada do <b>{meta.get('modelo', '?')}</b> em {data} (<code>{nome_gravacao}</code>)"]
+    else:
+        partes = [f"referência: gravação do <b>{meta.get('modelo', '?')}</b> em {data} (<code>{nome_gravacao}</code>); a resposta acima é do modelo ao vivo"]
     am = meta.get("amostra")
     if am:
         o_que = CRITERIOS.get(am["criterio"], am["criterio"])
-        partes.append(f"de <b>{am['tentativas']}</b> execuções reais, em <b>{am['satisfizeram']}</b> {o_que}")
+        partes.append(f"de <b>{am['tentativas']}</b> execuções gravadas, em <b>{am['satisfizeram']}</b> {o_que}")
     _exibir("<small>" + " · ".join(partes) + "</small>", " | ".join(partes))

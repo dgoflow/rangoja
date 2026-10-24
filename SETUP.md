@@ -91,10 +91,23 @@ e rode a primeira célula de novo.
 | `RANGOJA_LIMIAR_ESTABILIDADE` | taxa mínima de acerto | `0.8` |
 | `RANGOJA_PHOENIX` | `off` desliga o Phoenix | `on` |
 
-**O que muda em `live`.** O agente que a N1.1 monta à mão chama o modelo de `RANGOJA_MODELO` de
-verdade: a resposta varia entre execuções. As células de falha que usam `atender(..., gravacao=...)`
-continuam usando a gravação, para a lição aparecer sempre; passe `gravacao=None` a `atender` para ver
-o modelo de verdade. Em `record`, as respostas novas são salvas em `rangoja/gravacoes/`.
+**O modo decide de onde vem a resposta do modelo:**
+
+| Modo | Resposta do modelo |
+|---|---|
+| `replay` (padrão) | uma gravação de um modelo real, sem rede e sem chave |
+| `live` | o modelo de `RANGOJA_MODELO`, de verdade, com a sua chave |
+| `record` | o modelo de verdade, e as respostas novas são salvas em `rangoja/gravacoes/` |
+
+Em `live` e `record`, o `gravacao=` das células é ignorado, e a tabela de cada resposta mostra
+`live` como origem. A gravação continua aparecendo como **referência** (por exemplo, "em 0 de 6
+execuções gravadas o modelo consultou o pedido"), para você comparar com o que o modelo fez agora.
+
+Como o modelo ao vivo varia entre execuções, a falha de uma seção pode não se repetir, e as conferências
+com ✅ viram um aviso ⚠️ ("não se confirmou desta vez") em vez de interromper o notebook. As seções em que o
+modelo real não errou (N2.3, N2.5, N2.7 e as falhas induzidas do NB03) usam respostas escritas à mão,
+rotuladas como roteiro, e elas valem em qualquer modo.
+
 **Isso custa tokens**; prefira uma chave com limite de gasto baixo.
 
 Para rodar os testes com o modelo real (estabilidade da trajetória e relações metamórficas), é preciso a chave **e** o modo `live`; sem os dois, eles aparecem como `s` (pulados) e `-rs` mostra o motivo:

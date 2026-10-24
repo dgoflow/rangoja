@@ -67,9 +67,14 @@ def url() -> str | None:
     return f"http://127.0.0.1:{PORTA}/projects" if ligado() else None
 
 
+def _titulo_versao(atendimento) -> str:
+    versao = getattr(atendimento, "_versao", None)
+    return versao.titulo if versao is not None else atendimento.versao
+
+
 def anatomia(atendimento) -> str:
     """Árvore textual do atendimento: agente → modelo → ferramenta. Serve com ou sem Phoenix."""
-    linhas = [f"atendimento {atendimento.caso_id} ({atendimento.versao}) — status: {atendimento.status}"]
+    linhas = [f"atendimento {atendimento.caso_id} ({_titulo_versao(atendimento)}) — status: {atendimento.status}"]
     ultimo = None
     for ev in atendimento.eventos:
         if not ev.content or not ev.content.parts:
