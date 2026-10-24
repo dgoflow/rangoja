@@ -38,10 +38,9 @@ Para uma visão guiada do que cada notebook ensina, leia o [ROTEIRO.md](ROTEIRO.
 Veja o [SETUP.md](SETUP.md). Em resumo:
 
 ```bash
-uv venv --python 3.12 && source .venv/bin/activate
-uv pip install -e ".[dev,live]"
-python -m ipykernel install --user --name rangoja
-jupyter lab notebooks/00_ambiente.ipynb
+uv sync --extra dev --extra live
+uv run python -m ipykernel install --user --name rangoja
+uv run jupyter lab notebooks/00_ambiente.ipynb
 ```
 
 ## Estrutura
@@ -49,7 +48,7 @@ jupyter lab notebooks/00_ambiente.ipynb
 ```
 rangoja/      pacote: dados, política, ferramentas, agentes, versões, modelo, avaliação
 notebooks/    NB00–NB04 e as especificações (notebooks/specs)
-tests/        a mesma bateria roda contra qualquer versão: pytest --versao v1
+tests/        a mesma bateria roda contra qualquer versão: uv run pytest --versao v1
 evals/        golden dataset gerado dos casos
 scripts/      gravação, geração dos notebooks, verificação das gravações
 specs/        especificação do pacote

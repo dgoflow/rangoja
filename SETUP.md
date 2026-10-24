@@ -27,10 +27,12 @@ ficam lentos e podem dar erro de permissão. No Windows sem WSL, `wsl --install`
 
 ```bash
 git clone https://github.com/dgoflow/rangoja.git ~/rangoja && cd ~/rangoja
-uv venv --python 3.12 && source .venv/bin/activate
-uv pip install -e ".[dev,live]"
-python -m ipykernel install --user --name rangoja
+uv sync --extra dev --extra live
+uv run python -m ipykernel install --user --name rangoja
 ```
+
+O `uv sync` cria o ambiente com o Python 3.12 (baixa se faltar) e instala exatamente as versões de
+`uv.lock`, as mesmas que o CI testa. Sem `source .venv/bin/activate`: os comandos rodam com `uv run`.
 
 O kernel `rangoja` é o que os notebooks usam. O registro é **por usuário**, não por pasta: se você
 tiver mais de um clone, vale o último em que rodou o `ipykernel install`. Rode-o de novo no clone que
@@ -39,7 +41,7 @@ estiver usando.
 ## Primeiro passo: NB00
 
 ```bash
-jupyter lab notebooks/00_ambiente.ipynb
+uv run jupyter lab notebooks/00_ambiente.ipynb
 ```
 
 Escolha o kernel **rangoja** e execute tudo, de cima para baixo. Em qualquer notebook, a primeira
@@ -98,7 +100,7 @@ o modelo de verdade. Em `record`, as respostas novas são salvas em `rangoja/gra
 Para rodar os testes com o modelo real (estabilidade da trajetória e relações metamórficas), é preciso a chave **e** o modo `live`; sem os dois, eles aparecem como `s` (pulados) e `-rs` mostra o motivo:
 
 ```bash
-RANGOJA_MODO=live pytest tests -m live -rs
+RANGOJA_MODO=live uv run pytest tests -m live -rs
 ```
 
 Cada teste repete os casos várias vezes (`RANGOJA_REPETICOES`, padrão 5) e **custa tokens**. Com o modelo real o resultado varia entre execuções, e um teste de estabilidade pode falhar sem que haja um defeito novo.
@@ -106,10 +108,10 @@ Cada teste repete os casos várias vezes (`RANGOJA_REPETICOES`, padrão 5) e **c
 ## Conferir que está tudo funcionando
 
 ```bash
-pytest tests -m "not live"                         # testes contra a v3
-pytest tests --versao v1 -m "not live"             # a mesma bateria contra a v1 (falhas esperadas)
-python scripts/verificar_gravacoes.py              # gravações em dia com o código
-pytest --nbmake --nbmake-kernel=rangoja notebooks/0*.ipynb   # executa os notebooks (~4 min)
+uv run pytest tests -m "not live"                         # testes contra a v3
+uv run pytest tests --versao v1 -m "not live"             # a mesma bateria contra a v1 (falhas esperadas)
+uv run python scripts/verificar_gravacoes.py              # gravações em dia com o código
+uv run pytest --nbmake --nbmake-kernel=rangoja notebooks/0*.ipynb   # executa os notebooks (~4 min)
 ```
 
 ## Atualizar o repositório
@@ -121,8 +123,8 @@ saídas antes:
 git stash push -m "minhas saidas" -- notebooks/ && git pull --ff-only
 ```
 
-Depois reinicie o kernel dos notebooks abertos. Se o `pyproject.toml` mudou, reinstale os extras
-(`uv pip install -e ".[dev,live]"`).
+Depois reinicie o kernel dos notebooks abertos. Para atualizar o ambiente depois de um `git pull`, rode
+`uv sync --extra dev --extra live` de novo.
 
 ## Phoenix
 
@@ -135,13 +137,13 @@ ocupada, os notebooks usam a `anatomia` em texto, sem perda de conteúdo.
 | Sintoma | O que fazer |
 |---|---|
 | `ModuleNotFoundError: rangoja` no notebook | O kernel errado. Escolha `rangoja` e confirme que instalou com `-e` no clone que está usando |
-| O notebook usa o código de outro clone | O kernel `rangoja` aponta para o último clone instalado: rode `python -m ipykernel install --user --name rangoja` neste |
+| O notebook usa o código de outro clone | O kernel `rangoja` aponta para o último clone instalado: rode `uv run python -m ipykernel install --user --name rangoja` neste |
 | A tabela diz `chave de API: não` mas o `.env` tem a chave | O kernel abriu antes de você editar o `.env`: reinicie o kernel e rode a primeira célula |
 | `chave de API: sim, mas a OpenAI a recusou` | Confira se copiou a chave inteira; ou apague-a do `.env`, reinicie o kernel e cole outra na N0.3 |
 | A N1.1 mostra `modelo: gravação` com a chave configurada | O kernel está em `replay`: ponha `RANGOJA_MODO=live` no `.env` (ou use a N0.3) e reinicie o kernel |
 | O NB01 pede a chave de novo depois da N0.3 | Cada notebook tem seu kernel: na N0.3, responda `s` para salvar no `.env` |
 | `git pull` diz *Your local changes would be overwritten* | Veja [Atualizar o repositório](#atualizar-o-repositório) |
-| Aviso vermelho `IProgress not found` | Falta `ipywidgets`: `uv pip install -e ".[dev,live]"` e reinicie o kernel |
-| `RespostaAusente` / `RoteiroEsgotado` em replay | Gravação desatualizada: `python scripts/verificar_gravacoes.py` diz qual; regrave com chave (`scripts/gravar_secoes.py --so N1.2/correcao`) |
+| Aviso vermelho `IProgress not found` | Falta `ipywidgets`: rode `uv sync --extra dev --extra live` e reinicie o kernel |
+| `RespostaAusente` / `RoteiroEsgotado` em replay | Gravação desatualizada: `uv run python scripts/verificar_gravacoes.py` diz qual; regrave com chave (`scripts/gravar_secoes.py --so N1.2/correcao`) |
 | Porta 6006 ocupada | `RANGOJA_PHOENIX_PORTA=6007` ou `RANGOJA_PHOENIX=off` |
 | `litellm` conflita com `mcp` | Use a versão fixada pelo extra `live` (`litellm==1.82.6`) |

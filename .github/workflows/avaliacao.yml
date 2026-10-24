@@ -15,13 +15,12 @@ jobs:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v5
         with:
-          python-version: "3.12"
-          cache: pip
-      - run: pip install -e ".[dev,live]"
+          enable-cache: true
+      - run: uv sync --locked --extra dev --extra live
       - name: Testes live contra v3
-        run: pytest tests/ -m live --versao v3 -q --junitxml=relatorio-live.xml
+        run: uv run pytest tests/ -m live --versao v3 -q --junitxml=relatorio-live.xml
       - uses: actions/upload-artifact@v4
         if: always()
         with:
