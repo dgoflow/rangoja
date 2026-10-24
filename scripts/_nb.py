@@ -11,15 +11,15 @@ PASTA = RAIZ / "notebooks"
 SETUP = '''from rangoja import config, dados, falhas, ferramentas, controle, observabilidade, relogio
 from rangoja.armazem import Armazem
 from rangoja.casos import caso
-from rangoja.execucao import atender, continuar, aprovar, recusar, expirar_pendencias, reiniciar_runner, estado_persistido
-from rangoja.notebook import (preparar_ambiente, preparar_secao, mostrar, comparar, verificar, verificar_falha,
+from rangoja.execucao import atender, atender_caso, continuar, aprovar, recusar, expirar_pendencias, reiniciar_runner, estado_persistido
+from rangoja.notebook import (preparar_ambiente, preparar_secao, mostrar, comparar, afirmar, esperar, verificar, verificar_falha,
                               resumo, amostra, matriz)
 from rangoja.trajetoria import chamou, ferramenta_antes, contar_chamadas
-from rangoja.versoes import v0, v1, v2, v3, montar
+from rangoja.versoes import v0, v1, v2, v3, v0_so_prompt, v1_agente, v2_controlado, v3_robusto, montar
 preparar_ambiente()'''
 
 AVISO = ("> ▶ **Comece por aqui:** execute a célula de código abaixo **uma vez**, antes de qualquer seção. "
-         "Ela importa tudo que os exemplos usam (`atender`, `verificar`, …). Depois disso, cada seção roda sozinha, na ordem que você quiser.")
+         "Ela importa tudo que os exemplos usam (`atender_caso`, `afirmar`, …). Depois disso, cada seção roda sozinha, na ordem que você quiser.")
 COMENTARIO = "# Execute esta célula primeiro: ela importa o que todas as seções usam.\n"
 
 
