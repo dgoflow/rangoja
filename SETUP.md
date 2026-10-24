@@ -36,12 +36,6 @@ O kernel `rangoja` é o que os notebooks usam. O registro é **por usuário**, n
 tiver mais de um clone, vale o último em que rodou o `ipykernel install`. Rode-o de novo no clone que
 estiver usando.
 
-Para ver os traces no Phoenix (opcional):
-
-```bash
-uv pip install -e ".[observabilidade]"
-```
-
 ## Primeiro passo: NB00
 
 ```bash
@@ -132,9 +126,9 @@ Depois reinicie o kernel dos notebooks abertos. Se o `pyproject.toml` mudou, rei
 
 ## Phoenix
 
-Com o extra `observabilidade` instalado e `RANGOJA_PHOENIX` diferente de `off`, o NB00 sobe o
-Phoenix em `http://127.0.0.1:6006` e os atendimentos aparecem no projeto `rangoja`.
-Sem o pacote, os notebooks usam a `anatomia` em texto.
+O Phoenix já vem na instalação. A primeira célula do NB00 sobe o servidor em `http://127.0.0.1:6006`,
+e os atendimentos aparecem no projeto `rangoja`. Com `RANGOJA_PHOENIX=off`, ou se a porta 6006 estiver
+ocupada, os notebooks usam a `anatomia` em texto, sem perda de conteúdo.
 
 ## Problemas comuns
 
