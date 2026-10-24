@@ -1,5 +1,9 @@
 # NB00 — Ambiente (`00_ambiente.ipynb`)
 
+> Especificação original do notebook, mantida como registro. O notebook em si e o
+> [`notebooks/README.md`](../README.md) descrevem o que existe hoje; os desvios estão em
+> [`IMPLEMENTACAO.md`](../../IMPLEMENTACAO.md#desvios-da-spec-e-por-quê).
+
 **Objetivo.** Garantir, antes do workshop, que o participante consegue rodar todos os
 notebooks. Feito em casa; não é apresentado.
 

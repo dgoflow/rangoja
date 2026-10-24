@@ -1,5 +1,9 @@
 # NB01 — Do prompt ao agente (`01_do_prompt_ao_agente.ipynb`)
 
+> Especificação original do notebook, mantida como registro. O notebook em si e o
+> [`notebooks/README.md`](../README.md) descrevem o que existe hoje; os desvios estão em
+> [`IMPLEMENTACAO.md`](../../IMPLEMENTACAO.md#desvios-da-spec-e-por-quê).
+
 **Pergunta:** o que separa um prompt de um agente?
 **Partida → chegada:** `v0` (agente sem ferramentas, política colada) → `v1`
 (`ferramentas`, `schema`, `estado`, `contexto_enxuto`, `memoria_livre`).

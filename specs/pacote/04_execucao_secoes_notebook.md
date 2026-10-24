@@ -1,5 +1,8 @@
 # 04 — Execução, seções e helpers de notebook
 
+> Proposta original (v0.1), mantida como registro. Onde a implementação diverge, vale o
+> [README desta pasta](README.md) e os desvios em [`IMPLEMENTACAO.md`](../../IMPLEMENTACAO.md#desvios-da-spec-e-por-quê).
+
 ## `execucao.py`
 
 As funções públicas são síncronas, para funcionar em células do Jupyter (que já têm um

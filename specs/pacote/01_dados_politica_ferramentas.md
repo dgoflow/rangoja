@@ -1,5 +1,8 @@
 # 01 — Dados, política e ferramentas
 
+> Proposta original (v0.1), mantida como registro. Onde a implementação diverge, vale o
+> [README desta pasta](README.md) e os desvios em [`IMPLEMENTACAO.md`](../../IMPLEMENTACAO.md#desvios-da-spec-e-por-quê).
+
 Valores e casos de referência: [`notebooks/specs/casos.md`](../../notebooks/specs/casos.md).
 Este arquivo especifica as estruturas e o comportamento.
 

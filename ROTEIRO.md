@@ -31,11 +31,14 @@ Você vai encontrar sempre as mesmas peças, que ligam o notebook à implementa�
 
 | No notebook | O que faz |
 |---|---|
-| `s = preparar_secao("N2.1")` | Isola a seção: armazém, relógio e falhas novos. Qualquer seção roda sozinha |
-| `atender(versao, caso, ...)` | Roda o caso no agente (`Runner` do ADK) e devolve um `Atendimento` |
+| `v0_so_prompt`, `v1_agente`, `v2_controlado`, `v3_robusto` | As quatro versões. Digitar o nome mostra os componentes de cada uma (`v0`…`v3` são os mesmos objetos) |
+| `s = preparar_secao("N2.1")` | Isola a seção: armazém, relógio e falhas novos, e traz o caso e as versões de falha e de correção (`s.caso`, `s.falha`, `s.correcao`) |
+| `atender_caso(caso, com=versao, replay=...)` | Roda o caso no agente (`Runner` do ADK) e devolve um `Atendimento`. `replay=` é a gravação usada em modo `replay`; `roteiro=` é uma resposta escrita à mão |
+| `comparar(antes, depois)` | Mostra o que muda de uma versão para a outra (prompt, ferramentas, callbacks, execução), lido do agente construído |
 | `resumo(a)` | Mostra status, decisão, resposta e a trajetória de ferramentas |
-| `mostrar(obj)` | Exibe o código do conceito (curto e legível) ou os componentes de uma versão |
-| `verificar(cond, msg)` / `verificar_falha(...)` | ✅ ou ❌ com o que se esperava; a segunda só afirma quando a falha é reproduzível |
+| `mostrar(obj)` | Exibe o código do conceito (curto e legível) |
+| `afirmar(cond, msg)` | ✅, ou ❌ e interrompe o notebook: para o que o código garante |
+| `esperar(a, cond, msg)` | Para o que depende do modelo: afirma com gravação ou roteiro; ao vivo, mostra ⚠️ se não aconteceu desta vez |
 | `amostra(gravacao)` | Diz de qual execução real a falha veio e com que taxa |
 | `falhas.injetar(...)` | Provoca uma falha na hora certa (NB03 e NB04) |
 | `aprovar(a)`, `recusar(a, ...)`, `relogio.avancar(...)` | O papel do supervisor humano e a passagem do tempo |
@@ -43,6 +46,10 @@ Você vai encontrar sempre as mesmas peças, que ligam o notebook à implementa�
 **Versões são montagens de componentes.** Cada conceito é um componente pequeno com nome (`ferramentas`,
 `schema`, `aprovacao`, `retry`, …). Uma versão é um conjunto deles: `v2.sem("contrato")`,
 `montar(v1, com=["aprovacao"])`. Cada seção acrescenta **um** componente à versão da seção anterior.
+
+**Muitas seções têm um `# 🎯 EXPERIMENTE`.** É uma célula comentada com uma variação para você tentar: tirar um
+componente, injetar outra falha, rodar a bateria de testes contra uma versão que você montou. Descomente as linhas de
+código (a primeira linha é o título) e execute.
 
 **O agente roda como biblioteca.** O ADK é usado pelo `Runner`, dentro do processo do notebook: não há
 servidor nem API a subir.
@@ -54,6 +61,11 @@ servidor nem API a subir.
 - **roteiro**: resposta escrita à mão, usada quando o modelo real **não errou** naquela situação nas
   execuções que fizemos. A falha é uma simulação, e a célula diz isso.
 
+Com a sua chave, o modo `live` (célula N0.3) troca as **gravações** pelo modelo de verdade, em todas as
+células: a resposta varia entre execuções, gasta tokens, e a falha de uma seção pode não se repetir (a
+conferência vira ⚠️ em vez de ✅). Os **roteiros** continuam valendo em qualquer modo. As gravações são do
+gpt-4o-mini; os números citados nos notebooks são desse modelo.
+
 O registro do que o modelo real fez está em [`rangoja/gravacoes/RELATORIO.md`](rangoja/gravacoes/RELATORIO.md)
 e o que foi e não foi implementado, em [`IMPLEMENTACAO.md`](IMPLEMENTACAO.md).
 
@@ -64,8 +76,8 @@ Para instalar e rodar, veja o [`SETUP.md`](SETUP.md).
 ## NB00 — Ambiente
 
 **Pergunta:** meu ambiente funciona?
-Confere versões (Python, ADK 1.33.0), roda um atendimento só com gravações (sem rede e sem chave), mostra o
-Phoenix se estiver instalado e executa a suíte de testes de orquestração na v3. Se N0.1, N0.2 e N0.6
+Confere versões (Python, ADK 1.33.0), roda um atendimento só com gravações (sem rede e sem chave), oferece
+ligar o modo `live` com a sua chave (N0.3, opcional), mostra o Phoenix e executa a suíte de testes de orquestração na v3. Se N0.1, N0.2 e N0.6
 passaram, você está pronto.
 
 ## NB01 — Do prompt ao agente
@@ -135,7 +147,7 @@ as quatro versões, e você vê os testes passarem à medida que o sistema amadu
 | N4.5 | Ordem e ferramentas erradas | **Trajetória** (`ferramenta_antes`, contagens) | v1 × v2 diferem no desvio de fluxo |
 | N4.6 | Qualidade da resposta | **Avaliadores programáticos** sobre o golden | Com o modelo real na v3, cerca de 10 dos 20 casos passam; as reprovações variam entre execuções e algumas mostram expectativa estrita demais |
 | N4.7 | Entradas equivalentes, decisões diferentes | **Relações metamórficas**: invariância e monotonicidade | Com o modelo real, o grupo `C01` violou a invariância |
-| N4.8–N4.9 | Temperatura 0 resolve? O CI | — | N4.8 exige modelo ao vivo e não foi medido; o CI está em `.github/workflows/` |
+| N4.8–N4.9 | Temperatura 0 resolve? O CI | — | N4.8 exige modelo ao vivo: a célula EXPERIMENTE mede com a sua chave; o CI está em `.github/workflows/` |
 
 **Ideia que fica:** teste de agente não compara texto, verifica comportamento e relações entre saídas. E
 uma avaliação serve para mostrar o que ainda está errado, não para dar nota boa. A tabela final liga cada falha
@@ -154,6 +166,25 @@ Independentes entre si e dos principais, em [`notebooks/extras/`](notebooks/extr
 | `x2_conversas_longas` | E se a conversa não couber no contexto? | Janela e resumo perdem dados; o **estado estruturado** sobrevive |
 | `x3_dados_sinteticos` | Como ampliar o golden? | Gerar, filtrar duplicatas, revisão humana e variantes que preservam o sentido |
 | `x5_execucao_duravel.md` | Quando a retomada de N3.5 não basta? | Texto sobre motores de workflow durável: o que acrescentam e quando vale |
+
+## Como o agente da v3 roda
+
+Na v2 e na v3 o atendimento é uma sequência de três agentes. O modelo propõe dentro de cada etapa; o código
+decide a ordem, o que entra e o que sai, e quais ações são permitidas.
+
+```mermaid
+flowchart LR
+    C([mensagem do cliente]) --> T
+    subgraph seq["SequentialAgent (N2.5)"]
+        T["triagem<br/>guardrail de entrada (N2.2)"] --> R
+        R["resolução<br/>consulta do pedido em código (N2.5)<br/>contrato: sem pedido não decide (N2.7)<br/>categorias liberam ferramentas (N2.6)"] --> P
+        P["resposta<br/>guardrail de saída (N2.3)"]
+    end
+    R <--> F["ferramentas<br/>limite e aprovação humana (N2.1)<br/>recorrência e memória segura (N2.4)<br/>limite de chamadas (N3.4)<br/>erro estruturado (N3.2)<br/>idempotência (N3.6)"]
+    F <--> A[("armazém SQLite<br/>reembolsos, pendências, tickets")]
+    P --> S([resposta ao cliente])
+    M["modelo: fallback → retry → falhas injetadas → gravação, roteiro ou modelo ao vivo (N3.3)"] -.- T & R & P
+```
 
 ## Mapa de conceitos
 
@@ -174,4 +205,5 @@ Independentes entre si e dos principais, em [`notebooks/extras/`](notebooks/extr
 
 Para uma leitura reduzida, as seções que carregam a ideia central de cada notebook são
 **N1.2** e **N1.4** (fatos e contrato), **N2.1** e **N2.4** (limite e memória), **N3.6** (idempotência)
-e **N4.7** (relações metamórficas). Esta é uma sugestão para estudo individual, não o roteiro da apresentação.
+e **N4.7** (relações metamórficas). Esta é uma sugestão para estudo individual. O roteiro da apresentação
+está em [`palestra/apresentacao.md`](palestra/apresentacao.md).

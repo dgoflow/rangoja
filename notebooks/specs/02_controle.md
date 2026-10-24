@@ -1,5 +1,9 @@
 # NB02 — Controle de comportamento (`02_controle.ipynb`)
 
+> Especificação original do notebook, mantida como registro. O notebook em si e o
+> [`notebooks/README.md`](../README.md) descrevem o que existe hoje; os desvios estão em
+> [`IMPLEMENTACAO.md`](../../IMPLEMENTACAO.md#desvios-da-spec-e-por-quê).
+
 **Pergunta:** como impedir que o agente faça o que não deve?
 **Partida → chegada:** `v1` → `v2`.
 

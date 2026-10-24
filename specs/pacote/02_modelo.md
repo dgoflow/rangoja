@@ -1,5 +1,8 @@
 # 02 — Pilha do modelo
 
+> Proposta original (v0.1), mantida como registro. Onde a implementação diverge, vale o
+> [README desta pasta](README.md) e os desvios em [`IMPLEMENTACAO.md`](../../IMPLEMENTACAO.md#desvios-da-spec-e-por-quê).
+
 Todo agente do RangoJá recebe como `model` uma instância de `ModeloRangoja`, subclasse de
 `google.adk.models.BaseLlm`. Ela fica **abaixo** de todos os callbacks do ADK: guardrails,
 categorias e limites sempre rodam, qualquer que seja a fonte da resposta.
@@ -127,8 +130,11 @@ falha for injetada com `alvo="secundario"`.
 | Modo | Fonte usada | Escreve |
 |---|---|---|
 | `replay` | roteiro → gravação → cache | nada |
-| `live` | roteiro → gravação → cache → Gemini | nada (não polui o cache) |
-| `record` | roteiro → Gemini | cache e gravações |
+| `live` | roteiro → modelo ao vivo (OpenAI via `LiteLlm`); gravação e cache são ignorados | nada (não polui o cache) |
+| `record` | roteiro → modelo ao vivo | cache (as gravações nomeadas vêm de `scripts/gravar_secoes.py` e `rodada_exploratoria.py`) |
+
+*Implementado assim.* A proposta original fazia `live` consultar gravação e cache antes do modelo; na
+implementação, em `live` o modelo responde de verdade em todas as células e a gravação vira referência.
 
 ## Juiz
 

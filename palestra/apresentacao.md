@@ -7,15 +7,17 @@ Itens marcados **[decidir]** ou **[verificar]** estão em aberto.
 
 - **Formato:** hands-on. 1 hora = 50 min de apresentação + 10 min de perguntas. Cada participante executa os notebooks no próprio computador.
 - **Em hands-on, o gargalo é o ambiente, não o conteúdo.** Cada participante instala sozinho; em 50 minutos não há como resolver 30 instalações diferentes ao vivo. Por isso o **pré-trabalho é parte do plano**, não opcional: sem ele, a primeira metade da palestra vira suporte.
-- Ambientes recomendados: **Linux** e **WSL2 (Ubuntu)**. macOS: deve funcionar, não verificado. Windows nativo: não recomendado.
-- **Padrão `replay`** (inclusivo): roda sem chave e sem internet depois da instalação. **Preferido: `live`**, cada um com a própria chave da OpenAI. A chave não pode ser empecilho: quem não tiver segue em replay.
-- **Na célula N0.3** cada participante cola a chave com entrada oculta; ela vale só para aquele kernel e nada é gravado. Não precisa editar `.env` nem reiniciar o kernel.
-- **Custo:** as células de falha continuam usando a gravação mesmo em `live`; só consome tokens quem passa `gravacao=None` ou roda os testes `live`. Sugerir chave com limite de gasto baixo.
+- Ambientes recomendados: **Linux**, **WSL2 (Ubuntu)** e **macOS** (testes e notebooks verificados em macOS com Python 3.11). Windows nativo: não recomendado. Sem instalação local: o `.devcontainer/` abre o material no GitHub Codespaces ou no VS Code com Docker.
+- **Na sala, todos em `replay`.** Roda sem chave e sem internet depois da instalação, e cada máquina mostra exatamente os números dos slides. Em `live` o modelo responde de verdade em **todas** as células: gasta tokens, cada atendimento fica mais lento (várias chamadas ao modelo) e a falha de uma seção pode não se repetir (a célula mostra ⚠️ em vez de ✅). Isso é ótimo para estudar em casa e ruim para uma sala que precisa ver a mesma coisa ao mesmo tempo.
+- **O ao vivo fica no telão.** O apresentador, com a própria chave, mostra uma cena em `live` para a sala ver que o modelo varia. **[decidir]** qual cena; sugestão: N1.2 (a gravação diz "0 de 6 consultaram o pedido"; ao vivo, o que acontece agora?).
+- **Na sala, pule a N0.3.** Ela liga o `live` sozinha quando já existe uma chave (no ambiente ou no `.env`), e muitos desenvolvedores têm uma exportada. Quem quiser rodar ao vivo usa a N0.3 em casa.
 - **Quem travar não para a sala.** Fica em dupla com um vizinho, ou acompanha as saídas salvas no notebook renderizado. Dizer isso no slide 3.
-- **Ritmo de cada cena:** *prever → rodar → explicar*. Antes de executar, pergunte à sala o que vai acontecer. A execução em si é rápida (os 5 notebooks juntos rodam em ~4 min); o que consome tempo é a conversa.
+- **Ritmo de cada cena:** *prever → rodar → explicar*. Antes de executar, pergunte à sala o que vai acontecer. Em `replay` a execução é rápida (os 5 notebooks juntos rodam em menos de 1 min); o que consome tempo é a conversa.
+- **Células `# 🎯 EXPERIMENTE`** trazem uma variação comentada. Nas cenas da palestra que têm uma (N1.4, N2.1, N2.2, N2.4, N3.6), ela é o "faça"; o resto fica para casa. N1.2 e N4.7 não têm: o "faça" é prever e comparar.
+- **Gravação × roteiro no slide.** Toda cena diz de onde vem a falha. N3.6 é **roteiro** com falha induzida (o timeout é provocado de propósito); a matriz da N4.7 roda com modelo roteirizado, e o número da cena (a violação no grupo `C01`) vem das gravações da v3; as demais cenas vêm de gravações do gpt-4o-mini. Os números são desse modelo: se perguntarem "e com um modelo mais forte?", a resposta honesta é que não medimos, e que o material permite medir (`RANGOJA_MODELO` + modo `record`).
 - **Ao vivo, pular a N0.4 (Phoenix) e a N0.6 (suíte de testes).** A primeira sobe um servidor e pode colidir com a porta 6006 em algumas máquinas; a segunda roda o pytest. Nenhuma é necessária para a palestra.
 - **Apoio:** **[decidir]** quem ajuda com ambiente durante a palestra (monitor, colega, canal de chat).
-- **[verificar]** Instalação completa e NB00 em WSL2 limpo, e (se for oferecido) em macOS.
+- **[verificar]** Instalação completa e NB00 em WSL2 limpo, e no Codespaces pelo `.devcontainer/`.
 - **[verificar]** Ensaiar com cronômetro, de preferência com alguém executando junto.
 
 ## Linha do tempo (50 min)
@@ -44,7 +46,8 @@ Mensagem curta, com a promessa e uma tarefa:
 
 > Na palestra você vai executar os notebooks. Leva 10 minutos instalar antes; durante a palestra não dá tempo. Siga o passo a passo, abra o `00_ambiente.ipynb` e confira que N0.1 e N0.2 estão ✅. Quem não conseguir, venha assim mesmo: dá para acompanhar em dupla.
 
-- Para o modo `live`: tenha uma chave da OpenAI com algum crédito, de preferência com limite de gasto baixo. Na sala, a N0.3 pede a chave; não é preciso configurar nada antes.
+- Não é preciso chave da OpenAI: na sala tudo roda em `replay`. Quem quiser repetir em casa com o modelo ao vivo usa uma chave com limite de gasto baixo, pela N0.3.
+- Sem como instalar? Abra o repositório no GitHub Codespaces (botão *Code → Codespaces*): o `.devcontainer/` instala tudo.
 - Windows: `wsl --install` (pede reinício), depois os comandos do slide 2 dentro do Ubuntu.
 - **[decidir]** Canal para tirar dúvidas de instalação antes do dia.
 
@@ -66,17 +69,16 @@ Mensagem curta, com a promessa e uma tarefa:
 |---|---|
 | Linux | recomendado |
 | Windows com WSL2 (Ubuntu) | recomendado |
-| macOS | deve funcionar, não verificado |
+| macOS | recomendado |
 | Windows nativo (PowerShell) | não recomendado |
 
-Sem chave, tudo roda em `replay`. **Com chave (preferido)**, o modo `live` liga na célula N0.3: você cola a chave, a entrada é oculta; a célula pergunta se salva no `.env` para os outros notebooks.
+Sem chave, tudo roda em `replay`, e é assim que vamos rodar hoje. O modo `live` (a sua chave, na N0.3) fica para casa.
 
 ```bash
 git clone https://github.com/dgoflow/rangoja.git ~/rangoja && cd ~/rangoja
-uv venv --python 3.12 && source .venv/bin/activate
-uv pip install -e ".[dev,live]"
-python -m ipykernel install --user --name rangoja
-jupyter lab notebooks/00_ambiente.ipynb
+uv sync --extra dev --extra live
+uv run python -m ipykernel install --user --name rangoja
+uv run jupyter lab notebooks/00_ambiente.ipynb
 ```
 
 > No WSL, clone em `~/rangoja`, **nunca** em `/mnt/c/...`.
@@ -86,12 +88,12 @@ jupyter lab notebooks/00_ambiente.ipynb
 
 ### Slide 3 — Smoke test: 2 minutos
 
-1. Escolha o kernel **rangoja**
+1. Confira que o kernel é **rangoja** (os notebooks já abrem com ele)
 2. Execute a **primeira célula** (a de preparação) antes de qualquer outra
 3. Execute **N0.1** e **N0.2**. Pronto quando os dois estiverem ✅
-4. **N0.3:** cole sua chave quando pedir (ou Enter vazio para seguir em replay)
+4. **Pule a N0.3** (se você tem uma chave da OpenAI configurada, ela liga o modo ao vivo)
 
-> Sem a primeira célula aparece `NameError: name 'verificar' is not defined`.
+> Sem a primeira célula aparece `NameError: name '...' is not defined`.
 > Editou o `.env` com o notebook aberto? Reinicie o kernel e rode a primeira célula de novo (ou use a N0.3).
 
 **Não rodou em 2 minutos? Sem problema.** Sente com um vizinho ou acompanhe as saídas salvas. Resolvemos depois.
@@ -107,7 +109,9 @@ Em cada cena: o slide mostra o caso e a pergunta; a plateia prevê; todos execut
 ### N1.2 — Ferramentas trazem fatos (6 min)
 
 - **Pergunta:** se damos ferramentas ao modelo, ele as usa?
-- **Número:** em 6 execuções reais com a política colada, 0 consultaram o pedido.
+- **Número:** em 6 execuções gravadas com a política colada, 0 consultaram o pedido.
+- **Ponte:** com decisão estruturada e estado, a versão da N1.6 consultou em 5 de 6; com contexto enxuto, em 6 de 6. Seis amostras não separam o efeito de cada componente: diga isso.
+- **No telão (sugestão):** rode esta cena em `live` e compare com a gravação.
 - **Ideia:** ter ferramenta não garante o uso; o que separa um prompt de um agente é o que o código dá ao modelo.
 
 ### N1.4 — Prosa × estrutura (4 min) *[folga]*
@@ -126,8 +130,9 @@ Em cada cena: o slide mostra o caso e a pergunta; a plateia prevê; todos execut
 ### N2.2 — Guardrail de entrada (5 min)
 
 - **Casos:** `C05` (injeção de instrução) e `C10` (fora do escopo).
-- **Ponto central:** o guardrail **não impediu** o modelo de tentar; quem segurou foi o limite da N2.1.
-- **Ideia:** defesa em camadas.
+- **Ponto central:** na gravação, o guardrail **não impediu** o modelo de tentar; quem segurou foi o limite da N2.1.
+- **Faça:** a célula EXPERIMENTE mostra uma frase de injeção que o padrão do guardrail não pega.
+- **Ideia:** defesa em camadas: o guardrail de entrada é uma lista de padrões, fácil de contornar, e não pode ser a única camada.
 
 ### N2.4 — Memória útil × memória perigosa (5 min) *[folga]*
 
@@ -138,6 +143,7 @@ Em cada cena: o slide mostra o caso e a pergunta; a plateia prevê; todos execut
 ### N3.6 — Reembolso em dobro (7 min)
 
 - **Caso `C03`:** a confirmação se perde depois do efeito.
+- **Origem:** roteiro com falha induzida (`falhas.injetar("timeout_apos_efeito")`), não um erro espontâneo do modelo. Dizer no slide.
 - **Número:** R$ 85,80 sem idempotência, R$ 42,90 com.
 - **Faça:** compare os dois totais lado a lado.
 - **Ideia:** filas e frameworks garantem "pelo menos uma vez"; "exatamente uma vez" é responsabilidade do sistema.
@@ -154,9 +160,10 @@ Em cada cena: o slide mostra o caso e a pergunta; a plateia prevê; todos execut
 
 - Tabela de recapitulação: qual camada barrou qual caso (final do NB02)
 - A avaliação serve para mostrar o que ainda está errado, não para dar nota boa
-- **Para levar, uma linha:** `v2.sem("contrato")` e veja o que quebra
+- **Para levar, uma linha:** `v2_controlado.sem("contrato")` e veja o que quebra (células EXPERIMENTE da N2.7 e da N4.3)
 - O que ficou de fora está no repositório: `ROTEIRO.md` guia a ordem dos notebooks
-- Links: repositório, `ROTEIRO.md`, `IMPLEMENTACAO.md`
+- Em casa, com a sua chave: N0.3 liga o `live` e a N4.8 mede se temperatura 0 resolve
+- Links: repositório, [`ROTEIRO.md`](../ROTEIRO.md), [`IMPLEMENTACAO.md`](../IMPLEMENTACAO.md)
 
 ## Perguntas (10 min)
 

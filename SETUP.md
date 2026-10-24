@@ -10,7 +10,8 @@ vê o modelo responder ao vivo (modo `live`); veja [Usando o modelo ao vivo](#us
 |---|---|
 | Linux | recomendado |
 | Windows com WSL2 (Ubuntu) | recomendado |
-| macOS | deve funcionar, não verificado |
+| macOS | recomendado (testes e notebooks verificados com Python 3.11) |
+| GitHub Codespaces ou VS Code com Docker | funciona sem instalar nada na máquina: veja [Sem instalar nada](#sem-instalar-nada-dev-container) |
 | Windows nativo (PowerShell) | não recomendado |
 
 No WSL, clone dentro do Linux (`~/rangoja`), **nunca** em `/mnt/c/...`: ali a instalação e o SQLite
@@ -20,7 +21,9 @@ ficam lentos e podem dar erro de permissão. No Windows sem WSL, `wsl --install`
 ## Requisitos
 
 - Python 3.11 ou mais novo (testado em 3.12; o `uv` baixa o 3.12 se faltar)
-- [uv](https://docs.astral.sh/uv/) (ou `pip`)
+- [uv](https://docs.astral.sh/uv/). É o caminho suportado: o `uv.lock` trava as versões que o CI testa.
+  Um `pip install -e .` sem o lock pode passar muitos minutos resolvendo dependências (o Phoenix e o ADK
+  têm muitas) e chegar a versões que ninguém testou.
 - Git
 
 ## Instalação
@@ -38,15 +41,25 @@ O kernel `rangoja` é o que os notebooks usam. O registro é **por usuário**, n
 tiver mais de um clone, vale o último em que rodou o `ipykernel install`. Rode-o de novo no clone que
 estiver usando.
 
+## Sem instalar nada (dev container)
+
+O repositório traz um `.devcontainer/` que faz a instalação acima sozinho:
+
+- **GitHub Codespaces:** no GitHub, *Code → Codespaces → Create codespace on main*. Quando terminar, abra
+  `notebooks/00_ambiente.ipynb` e escolha o kernel **rangoja**.
+- **VS Code com Docker:** abra a pasta e aceite *Reopen in Container*.
+
+As portas 8888 (Jupyter) e 6006 (Phoenix) ficam encaminhadas.
+
 ## Primeiro passo: NB00
 
 ```bash
 uv run jupyter lab notebooks/00_ambiente.ipynb
 ```
 
-Escolha o kernel **rangoja** e execute tudo, de cima para baixo. Em qualquer notebook, a primeira
-célula de código é a **preparação**: execute-a uma vez antes de rodar qualquer seção isolada (sem ela
-aparece `NameError: name 'verificar' is not defined`).
+Os notebooks já abrem com o kernel **rangoja**; se o Jupyter perguntar, escolha-o. Execute tudo, de cima
+para baixo. Em qualquer notebook, a primeira célula de código é a **preparação**: execute-a uma vez antes de
+rodar qualquer seção isolada (sem ela aparece `NameError: name '...' is not defined`).
 
 A tabela da primeira célula mostra modo, modelo, chave e Phoenix. A linha da chave diz:
 
@@ -58,7 +71,7 @@ A tabela da primeira célula mostra modo, modelo, chave e Phoenix. A linha da ch
 | `sim, não validada (sem rede?)` | a OpenAI não respondeu a tempo; a chave pode estar certa |
 
 Se N0.1, N0.2 e N0.6 passaram, você está pronto. Cada seção dos notebooks abre com
-`preparar_secao("N2.3")` e roda sozinha: você pode pular direto para a que quiser.
+`preparar_secao("N2.3")` (no NB01, monta a versão à vista) e roda sozinha: você pode pular direto para a que quiser.
 
 ## Usando o modelo ao vivo
 
@@ -97,15 +110,15 @@ e rode a primeira célula de novo.
 |---|---|
 | `replay` (padrão) | uma gravação de um modelo real, sem rede e sem chave |
 | `live` | o modelo de `RANGOJA_MODELO`, de verdade, com a sua chave |
-| `record` | o modelo de verdade, e as respostas novas são salvas em `rangoja/gravacoes/` |
+| `record` | o modelo de verdade, e as respostas novas são salvas no cache (`.cache/`); para regravar as gravações das seções, use `scripts/gravar_secoes.py` |
 
-Em `live` e `record`, o `gravacao=` das células é ignorado, e a tabela de cada resposta mostra
+Em `live` e `record`, o `replay=` das células é ignorado, e a tabela de cada resposta mostra
 `live` como origem. A gravação continua aparecendo como **referência** (por exemplo, "em 0 de 6
 execuções gravadas o modelo consultou o pedido"), para você comparar com o que o modelo fez agora.
 
 Como o modelo ao vivo varia entre execuções, a falha de uma seção pode não se repetir, e as conferências
 com ✅ viram um aviso ⚠️ ("não se confirmou desta vez") em vez de interromper o notebook. As seções em que o
-modelo real não errou (N2.3, N2.5, N2.7 e as falhas induzidas do NB03) usam respostas escritas à mão,
+modelo real não errou (N2.3, N2.5, N2.7, a versão em sequência da N2.6 e as falhas induzidas do NB03) usam respostas escritas à mão,
 rotuladas como roteiro, e elas valem em qualquer modo.
 
 **Isso custa tokens**; prefira uma chave com limite de gasto baixo.
@@ -124,7 +137,7 @@ Cada teste repete os casos várias vezes (`RANGOJA_REPETICOES`, padrão 5) e **c
 uv run pytest tests -m "not live"                         # testes contra a v3
 uv run pytest tests --versao v1 -m "not live"             # a mesma bateria contra a v1 (falhas esperadas)
 uv run python scripts/verificar_gravacoes.py              # gravações em dia com o código
-uv run pytest --nbmake --nbmake-kernel=rangoja notebooks/0*.ipynb   # executa os notebooks (~4 min)
+uv run pytest --nbmake --nbmake-kernel=rangoja notebooks/0*.ipynb   # executa os notebooks (~1 min)
 ```
 
 ## Atualizar o repositório
@@ -149,7 +162,9 @@ ocupada, os notebooks usam a `anatomia` em texto, sem perda de conteúdo.
 
 | Sintoma | O que fazer |
 |---|---|
-| `ModuleNotFoundError: rangoja` no notebook | O kernel errado. Escolha `rangoja` e confirme que instalou com `-e` no clone que está usando |
+| `ModuleNotFoundError: rangoja` no notebook | O kernel errado. Escolha `rangoja` e confirme que rodou `uv sync` e o `ipykernel install` no clone que está usando |
+| `No such kernel named rangoja` | Falta registrar o kernel: `uv run python -m ipykernel install --user --name rangoja` |
+| `pip install` fica minutos "resolvendo dependências" | Use o `uv sync` da [Instalação](#instalação): ele lê as versões travadas no `uv.lock` |
 | O notebook usa o código de outro clone | O kernel `rangoja` aponta para o último clone instalado: rode `uv run python -m ipykernel install --user --name rangoja` neste |
 | A tabela diz `chave de API: não` mas o `.env` tem a chave | O kernel abriu antes de você editar o `.env`: reinicie o kernel e rode a primeira célula |
 | `chave de API: sim, mas a OpenAI a recusou` | Confira se copiou a chave inteira; ou apague-a do `.env`, reinicie o kernel e cole outra na N0.3 |

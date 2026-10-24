@@ -1,5 +1,9 @@
 # NB04 — Testes e avaliação (`04_testes_e_avaliacao.ipynb`)
 
+> Especificação original do notebook, mantida como registro. O notebook em si e o
+> [`notebooks/README.md`](../README.md) descrevem o que existe hoje; os desvios estão em
+> [`IMPLEMENTACAO.md`](../../IMPLEMENTACAO.md#desvios-da-spec-e-por-quê).
+
 **Pergunta:** como provar que funciona sem saber a resposta certa?
 **Sob teste:** `v0`, `v1`, `v2`, `v3` e variantes. Recurso pedagógico central: **a
 mesma bateria contra todas as versões**, com os testes ficando verdes à medida que o

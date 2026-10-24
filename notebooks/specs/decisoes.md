@@ -6,7 +6,7 @@ encontrado na revisão (A1…D4). Revisar e reverter o que não fizer sentido.
 
 ## Verificação no ADK 1.33.0
 
-Feita no código-fonte do pacote `google-adk==1.33.0` (mesma versão do PDC1), instalado
+Feita no código-fonte do pacote `google-adk==1.33.0` (a versão fixada no material), instalado
 num ambiente descartável em 2026-10-21.
 
 | Recurso | Resultado | Onde no ADK |
@@ -23,7 +23,7 @@ num ambiente descartável em 2026-10-21.
 | Modelo customizado | Subclasse de `BaseLlm` com `generate_content_async` | `models/base_llm.py` |
 
 Não verificado (fazer na implementação): pacote `openinference-instrumentation-google-adk`
-compatível com 1.33 (o PDC1 usa ≥ 0.1.4) e o comportamento dos spans quando a resposta
+compatível com 1.33 (a partir da 0.1.4) e o comportamento dos spans quando a resposta
 vem de um `BaseLlm` customizado.
 
 ## Decisões
@@ -49,15 +49,15 @@ vem de um `BaseLlm` customizado.
 - **B1 — `output_schema` + ferramentas no mesmo agente**, usando o suporte do ADK. As
   funções de trajetória ignoram ferramentas internas (`set_model_response`,
   `adk_request_confirmation`, `transfer_to_agent`).
-- **B3 — Gemini direto (API do AI Studio), sem LiteLLM.** Retry e fallback são código do
-  próprio RangoJá, visível no NB03 (`resiliencia/retry.py`). Alternativas de produção
+- **B3 — Gemini direto (API do AI Studio), sem LiteLLM.** *Revertida na implementação:* a chave é da OpenAI e o caminho ao vivo usa o `LiteLlm` do ADK (desvio 10 em [IMPLEMENTACAO.md](../../IMPLEMENTACAO.md)). O resto vale: retry e fallback são código do
+  próprio RangoJá, visível no NB03 (`modelo/pilha.py`). Alternativas de produção
   (opções de retry do `google-genai`, LiteLLM) entram como menção. Os modelos são
   configuração (`RANGOJA_MODELO`, `RANGOJA_MODELO_FALLBACK`, `RANGOJA_MODELO_JUIZ`); o
   juiz é de outra família de tamanho, diferente do agente. Os IDs exatos são fixados na
   implementação e gravados nos metadados de cada gravação.
 - **B2 — Pilha do modelo.** Tudo fica **abaixo** dos callbacks (guardrails sempre rodam),
   dentro de um `BaseLlm` composto, de fora para dentro:
-  `fallback → retry → injeção de falhas → fonte (cache | gravação | roteiro | Gemini)`.
+  `fallback → retry → injeção de falhas → fonte (cache | gravação | roteiro | modelo ao vivo)`.
   Assim, falhas injetadas acontecem também em `replay` e o retry as enxerga. Cache não
   é plugin (plugins pulariam os guardrails).
 - **B4 — Três fontes de resposta do modelo:**

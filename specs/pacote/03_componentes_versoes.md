@@ -1,5 +1,8 @@
 # 03 — Componentes, agentes e versões
 
+> Proposta original (v0.1), mantida como registro. Onde a implementação diverge, vale o
+> [README desta pasta](README.md) e os desvios em [`IMPLEMENTACAO.md`](../../IMPLEMENTACAO.md#desvios-da-spec-e-por-quê).
+
 ## Modelo de montagem (`componentes.py`)
 
 ```python
@@ -107,6 +110,8 @@ app = _construida.app
 ```
 
 `rangoja/agent.py` reexporta `v3`. O `adk web rangoja/versoes` lista as quatro.
+
+*Não implementado:* as versões não viraram pacotes de agente; os notebooks usam o `Runner` como biblioteca.
 
 ## Requisitos de legibilidade
 

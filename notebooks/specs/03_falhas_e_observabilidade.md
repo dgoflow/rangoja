@@ -1,5 +1,9 @@
 # NB03 — Falhas e observabilidade (`03_falhas_e_observabilidade.ipynb`)
 
+> Especificação original do notebook, mantida como registro. O notebook em si e o
+> [`notebooks/README.md`](../README.md) descrevem o que existe hoje; os desvios estão em
+> [`IMPLEMENTACAO.md`](../../IMPLEMENTACAO.md#desvios-da-spec-e-por-quê).
+
 **Pergunta:** o que acontece quando algo dá errado, e como eu vejo?
 **Partida → chegada:** `v2` → `v3` (`erros_estruturados`, `retry`, `fallback`,
 `limites`, `persistencia`, `idempotencia`).

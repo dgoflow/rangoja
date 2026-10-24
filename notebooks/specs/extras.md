@@ -1,5 +1,9 @@
 # Extras (`extras/`)
 
+> Especificação original do notebook, mantida como registro. O notebook em si e o
+> [`notebooks/README.md`](../README.md) descrevem o que existe hoje; os desvios estão em
+> [`IMPLEMENTACAO.md`](../../IMPLEMENTACAO.md#desvios-da-spec-e-por-quê).
+
 Notebooks opcionais, independentes entre si e dos principais. Seguem o mesmo padrão de
 seção, usam `preparar_secao` e o catálogo de casos.
 

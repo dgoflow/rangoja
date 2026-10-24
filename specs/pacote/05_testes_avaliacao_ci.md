@@ -1,5 +1,8 @@
 # 05 — Testes, avaliação, scripts e CI
 
+> Proposta original (v0.1), mantida como registro. Onde a implementação diverge, vale o
+> [README desta pasta](README.md) e os desvios em [`IMPLEMENTACAO.md`](../../IMPLEMENTACAO.md#desvios-da-spec-e-por-quê).
+
 ## `tests/conftest.py`
 
 - Opção `--versao` (padrão `v3`; aceita `v0`…`v3` e variantes como `v2-contrato`,
@@ -119,11 +122,11 @@ distintas. Sem teste; usada só no notebook.
   `v2-contrato` em subprocesso e exige que `test_sem_pedido_sem_decisao` falhe (prova que
   a bateria pega a regressão); `pytest --nbmake notebooks/ notebooks/extras/` em
   `replay`; `scripts/verificar_gravacoes.py`.
-- `avaliacao.yml` (agendado semanal + manual; segredo `GOOGLE_API_KEY`):
+- `avaliacao.yml` (agendado semanal + manual; segredo `OPENAI_API_KEY`):
   `pytest -m live` contra `v3` com relatório publicado como artefato.
 
 ## `SETUP.md` (guia do participante)
 
-Requisitos (Python 3.11+, `uv`, Git), instalação, `.env` opcional (chave do AI Studio),
-como rodar o NB00, como abrir Phoenix e `adk web`, problemas comuns (porta ocupada, cache
-ausente, cota do Gemini), e o aviso de que tudo funciona em `replay` sem chave.
+Requisitos (Python 3.11+, `uv`, Git), instalação com `uv sync`, chave da OpenAI opcional (N0.3 ou `.env`),
+como rodar o NB00, o Phoenix, o dev container, problemas comuns (porta ocupada, kernel, gravação
+desatualizada), e o aviso de que tudo funciona em `replay` sem chave.
