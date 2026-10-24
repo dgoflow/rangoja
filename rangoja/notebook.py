@@ -85,10 +85,11 @@ def preparar_secao(secao_id: str) -> Secao:
     falhas.limpar()
     s = Secao(spec.id, spec.caso, spec.falha, spec.correcao, dict(spec.gravacoes),
               dict(spec.casos_extra), spec.roteiro)
-    _exibir(f"<small>seção <b>{s.id}</b> · caso <b>{s.caso}</b> · "
-            f"falha: <code>{getattr(s.falha, 'nome', '—')}</code> → correção: "
-            f"<code>{getattr(s.correcao, 'nome', '—')}</code></small>",
-            f"[{s.id}] caso {s.caso}; falha {getattr(s.falha, 'nome', '-')}; correção {getattr(s.correcao, 'nome', '-')}")
+    sem_correcao = s.correcao is None
+    texto_falha = f"{s.falha.nome}" if s.falha is not None else "nenhuma"
+    corpo = (f"**Seção {s.id}**: caso {s.caso}. Versão com o problema: `{texto_falha}`. "
+             + ("Esta seção não tem correção." if sem_correcao else f"Versão corrigida: `{s.correcao.nome}`."))
+    _exibir(f"<small>{html.escape(corpo.replace('**', '').replace('`', ''))}</small>", corpo.replace("**", "").replace("`", ""))
     return s
 
 
