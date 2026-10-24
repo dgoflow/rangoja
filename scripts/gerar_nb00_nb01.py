@@ -19,10 +19,15 @@ verificar(meta.version("google-adk") == "1.33.0", "google-adk 1.33.0")'''),
         md("## N0.2 — Replay: respostas gravadas do modelo real\n\n"
            "Um atendimento inteiro, sem rede e sem chave. A resposta vem de uma gravação do gpt-4o-mini. Três coisas para conferir: "
            "o status, se houve decisão estruturada e de onde veio a resposta."),
-        code('''a = atender(v0, caso("C01"), gravacao="N1.1/falha")  # a resposta que o gpt-4o-mini deu quando gravamos
-print("status:  ", a.status)
-print("decisão: ", a.decisao)       # None: o agente respondeu em texto, sem decisão
-print("origem:  ", a.fonte)         # ['gravacao']: nada foi chamado na rede'''),
+        code('''from IPython.display import Markdown, display
+
+a = atender(v0, caso("C01"), gravacao="N1.1/falha")  # a resposta que o gpt-4o-mini deu quando gravamos
+texto = " ".join((a.resposta or "—").split())
+display(Markdown(
+    f"**status:** {a.status}  \\n"
+    f"**decisão:** {a.decisao or 'nenhuma: a resposta é só texto'}  \\n"
+    f"**resposta:** {texto[:160]}{'…' if len(texto) > 160 else ''}  \\n"
+    f"**origem:** gravação do gpt-4o-mini, sem rede"))'''),
         code('''verificar(a.erro is None and set(a.fonte) == {"gravacao"}, "o atendimento rodou só com a gravação, sem rede e sem chave")'''),
         md("## N0.3 — Chave de API (opcional)\n\nSem chave você acompanha tudo em `replay`. Para rodar ao vivo, execute a célula abaixo: se já houver chave (no `.env`), ela liga o modo `live`; se não houver, pede sua `OPENAI_API_KEY` com entrada oculta. Cada notebook tem seu próprio kernel: a chave vale só para este, a menos que você aceite **salvá-la no `.env`** (fora do git) quando a célula perguntar."),
         code('''if not config.chave_disponivel():
