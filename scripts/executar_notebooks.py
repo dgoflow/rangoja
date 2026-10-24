@@ -1,6 +1,7 @@
 """Executa notebooks em modo replay e grava as saídas no próprio arquivo.
 
-    .venv/bin/python scripts/executar_notebooks.py 00_ambiente.ipynb 01_do_prompt_ao_agente.ipynb
+    uv run python scripts/executar_notebooks.py 00_ambiente.ipynb 01_do_prompt_ao_agente.ipynb
+    uv run python scripts/executar_notebooks.py extras/x1_memoria_pesquisavel.ipynb
 """
 from __future__ import annotations
 
@@ -21,7 +22,8 @@ def executar(nome: str) -> bool:
     pasta = caminho.parent
     nb = nbformat.read(caminho, as_version=4)
     os.environ["RANGOJA_MODO"] = "replay"
-    cliente = NotebookClient(nb, timeout=900, kernel_name="rangoja", resources={"metadata": {"path": str(pasta)}})
+    kernel = os.environ.get("RANGOJA_KERNEL", "rangoja")  # outro kernel só para conferir sem registrar o rangoja
+    cliente = NotebookClient(nb, timeout=900, kernel_name=kernel, resources={"metadata": {"path": str(pasta)}})
     try:
         cliente.execute()
         ok = True

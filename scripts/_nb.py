@@ -31,8 +31,10 @@ def code(texto: str):
     return nbf.v4.new_code_cell(texto.strip())
 
 
-def setup():
-    return code(COMENTARIO + SETUP)
+def setup(extra: str = ""):
+    """A célula de preparação. `extra` entra na mesma célula: o que o notebook inteiro usa precisa estar nela,
+    porque o aviso manda executar só esta antes de pular para qualquer seção."""
+    return code(COMENTARIO + SETUP + (f"\n\n{extra.strip()}" if extra.strip() else ""))
 
 
 def com_aviso(celulas: list) -> list:
@@ -48,7 +50,8 @@ def com_aviso(celulas: list) -> list:
 def salvar(nome: str, celulas: list) -> Path:
     nb = nbf.v4.new_notebook()
     nb.cells = com_aviso(celulas)
-    nb.metadata["kernelspec"] = {"display_name": "Python 3", "language": "python", "name": "python3"}
+    # o kernel que o SETUP registra: o Jupyter o escolhe sozinho ao abrir o notebook
+    nb.metadata["kernelspec"] = {"display_name": "rangoja", "language": "python", "name": "rangoja"}
     caminho = PASTA / nome
     caminho.parent.mkdir(parents=True, exist_ok=True)
     nbf.write(nb, caminho)

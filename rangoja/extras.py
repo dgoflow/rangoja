@@ -196,9 +196,9 @@ RESUMO_GENERICO = (
 
 def fatos_na_conversa(texto: str, estado: dict[str, Any]) -> dict[str, bool]:
     """Os fatos que o código precisa para continuar: o pedido e quanto já foi compensado."""
-    valor = estado["compensacoes"]
-    formas = {f"{valor:.2f}".replace(".", ","), f"{valor}"}
-    return {"pedido_id": str(estado["pedido_id"]) in texto, "compensado": any(f in texto for f in formas)}
+    pedido, valor = estado.get("pedido_id"), estado.get("compensacoes")  # ao vivo, o modelo pode não ter chegado lá
+    formas = {f"{valor:.2f}".replace(".", ","), f"{valor}"} if valor is not None else set()
+    return {"pedido_id": pedido is not None and str(pedido) in texto, "compensado": any(f in texto for f in formas)}
 
 
 def contexto_com_estado(estado: dict[str, Any], conversa: list[Turno], ultimos: int) -> str:

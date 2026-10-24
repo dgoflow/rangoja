@@ -27,8 +27,11 @@ display(Markdown(
     f"**status:** {a.status}  \\n"
     f"**decisão:** {a.decisao or 'nenhuma: a resposta é só texto'}  \\n"
     f"**resposta:** {texto[:160]}{'…' if len(texto) > 160 else ''}  \\n"
-    f"**origem:** gravação do gpt-4o-mini, sem rede"))'''),
-        code('''afirmar(a.erro is None and set(a.fonte) == {"gravacao"}, "o atendimento rodou só com a gravação, sem rede e sem chave")'''),
+    f"**origem:** {'gravação do gpt-4o-mini, sem rede' if config.modo() == 'replay' else config.modelo_primario() + ' ao vivo'}"))'''),
+        code('''if config.modo() == "replay":
+    afirmar(a.erro is None and set(a.fonte) == {"gravacao"}, "o atendimento rodou só com a gravação, sem rede e sem chave")
+else:
+    afirmar(a.erro is None and "live" in a.fonte, "o atendimento rodou com o modelo ao vivo")'''),
         md("## N0.3 — Chave de API (opcional)\n\nSem chave você acompanha tudo em `replay`. Para rodar ao vivo, execute a célula abaixo: se já houver chave (no `.env`), ela liga o modo `live`; se não houver, pede sua `OPENAI_API_KEY` com entrada oculta. Cada notebook tem seu próprio kernel: a chave vale só para este, a menos que você aceite **salvá-la no `.env`** (fora do git) quando a célula perguntar."),
         code('''if not config.chave_disponivel():
     print(config.diagnostico_chave())
@@ -37,7 +40,7 @@ elif config.modo() == "replay":
     print(config.usar_live())  # há chave: liga o modo ao vivo neste kernel
 print("modelo:", config.modelo_primario(), "| modo:", config.modo())
 print("chave de API:", config.estado_chave())'''),
-        md("## N0.4 — Observabilidade (Phoenix)\n\nO Phoenix é opcional. Sem ele, os notebooks mostram a trajetória em texto."),
+        md("## N0.4 — Observabilidade (Phoenix)\n\nO Phoenix vem na instalação. Com `RANGOJA_PHOENIX=off`, ou se a porta 6006 estiver ocupada, os notebooks mostram a mesma trajetória em texto (a `anatomia`), sem perda de conteúdo."),
         code('''print(observabilidade.ligar())
 print("interface:", observabilidade.url() or "indisponível")'''),
         md("## N0.5 — Como o agente roda\n\nOs notebooks usam o `Runner` do ADK como biblioteca, dentro deste processo: não há servidor nem API a subir. `atender_caso(...)` monta o agente da versão, roda o `Runner` e devolve o resultado. As interfaces `adk web` e `adk api_server` não fazem parte deste material."),
@@ -108,7 +111,7 @@ async for evento in runner.run_async(user_id="101", session_id=sessao.id, new_me
             print(f"[{evento.author}] chama {parte.function_call.name}({dict(parte.function_call.args)})")
         if parte.text:
             print(f"[{evento.author}] {parte.text}")'''),
-        md("**Parece certo, e é esse o problema.** A resposta segue a política (voucher de até R$ 15 por qualidade, reembolso do item que faltou). "
+        md("**Parece certo, e é esse o problema.** A resposta gravada segue a política (voucher de até R$ 15 por qualidade, reembolso do item que faltou). "
            "Mas olhe o que aconteceu de fato:\n\n"
            "- **Nada foi consultado.** O agente acreditou no cliente: não tinha como saber se o refrigerante faltou mesmo, nem quanto custava.\n"
            "- **Nada foi feito.** O cliente leu \"reembolso\", mas não existe reembolso no sistema: o agente tem zero ferramentas. Ao vivo, o modelo às vezes ainda diz que está \"processando\".\n"
@@ -128,6 +131,8 @@ resultado = atender_caso("C01", com=v0_so_prompt, replay="N1.1/falha")  # C01: c
 print("decisão:             ", resultado.decisao)     # None: nada que o código possa ler
 print("ferramentas chamadas:", resultado.trajetoria)  # []: o agente não consultou nem registrou nada
 print("resposta veio de:    ", resultado.fonte)'''),
+        code('''# 🎯 EXPERIMENTE: a ficha completa de uma versão, lida do agente construído (prompt, ferramentas, callbacks, execução)
+# comparar(None, v0_so_prompt)'''),
         md("O modelo só sabe o que está no contexto. Texto plausível não é fato. Como dar fatos ao modelo? **Ferramentas.**"),
 
         md("## N1.2 — Ferramentas trazem fatos\n\n"
@@ -146,6 +151,8 @@ for nome, funcao in ferramentas_do_agente.items():
 
 print("\\no que o ADK envia ao modelo sobre buscar_pedido:")
 print(FunctionTool(ferramentas_do_agente["buscar_pedido"])._get_declaration().model_dump_json(exclude_none=True, indent=1))'''),
+        code('''# 🎯 EXPERIMENTE: chame uma ferramenta você mesmo, como o ADK faria quando o modelo pede
+# ferramentas.consultar_politica("atraso")'''),
         md("Agora o atendimento. As ferramentas agem num banco de pedidos e reembolsos; começamos com ele limpo."),
         code('''Armazem.reset()  # banco de pedidos e reembolsos limpo para esta seção
 resultado = atender_caso("C01", com=com_ferramentas, replay="N1.2/correcao")  # replay: a resposta gravada do gpt-4o-mini; live: o modelo responde agora
@@ -155,7 +162,7 @@ reembolsos = [c.args.get("valor") for c in resultado.trajetoria if c.ferramenta 
 print("consultou o pedido antes de agir?", chamou(resultado.trajetoria, "buscar_pedido"))
 print("reembolsos registrados:", reembolsos, "| preço do refrigerante no pedido: R$ 8,00")'''),
         md("**O prompt pede, o modelo não obedece, e o código não percebe.** O prompt ganhou a frase *\"Consulte os fatos com as ferramentas antes de decidir. Nunca invente valores de pedido.\"* "
-           "e o agente tem `buscar_pedido`. Mesmo assim, nenhuma das 6 execuções gravadas consultou o pedido, e nesta o modelo registrou R$ 5 de reembolso por um refrigerante de R$ 8. "
+           "e o agente tem `buscar_pedido`. Mesmo assim, nenhuma das 6 execuções gravadas consultou o pedido, e na gravação usada em `replay` o modelo registrou R$ 5 de reembolso por um refrigerante de R$ 8. "
            "Ter ferramentas disponíveis **não garante** que o modelo as use. "
            "Isso muda nas próximas seções: com a decisão estruturada (N1.4) e o estado da conversa (N1.5), a versão de falha da N1.6 consultou o pedido em 5 de 6 execuções; com o contexto enxuto, em 6 de 6. Com 6 amostras, não dá para separar o efeito de cada componente."),
 
@@ -192,6 +199,11 @@ if d is not None:
     print("categoria:", d.categoria, "| solução:", d.solucao, "| valor:", d.valor)
 esperar(estruturada, d is not None and d.solucao in solucoes_permitidas(d.categoria),
          "o código consegue conferir a decisão: a solução existe na política para a categoria")'''),
+        code('''# 🎯 EXPERIMENTE: o schema recusa o que está fora do contrato. Esta solução não existe na política:
+# try:
+#     Decisao.model_validate({"categoria": "atraso", "solucao": "pix_na_hora", "valor": 10, "pedido_id": "4822"})
+# except Exception as erro:
+#     print(erro)'''),
         md("Nota: no ADK, a saída estruturada chega por uma ferramenta interna (`set_model_response`). Ela aparece nos eventos, mas não conta como ferramenta do atendimento."),
 
         md("## N1.5 — Estado da conversa\n\n"
@@ -240,6 +252,10 @@ if buscas:
     afirmar("entregador" not in buscas[0].resultado, "com o contexto enxuto, nenhum dado do entregador chega ao modelo")
 else:
     print("nesta execução o modelo não consultou o pedido")'''),
+        code('''# 🎯 EXPERIMENTE: o que cada variante de buscar_pedido devolve para outro pedido, sem passar pelo modelo
+# from rangoja.ferramentas import _completo, _resumo_enxuto
+# print("completo:", sorted(_completo(dados.pedido("5310"))))
+# print("enxuto:  ", sorted(_resumo_enxuto(dados.pedido("5310"))))'''),
 
         md("## N1.7 — Lembrar do cliente\n\n"
            "Caso `C13`: dois atendimentos do mesmo cliente, em dias diferentes. No primeiro ele diz que prefere a entrega na portaria. "
@@ -268,6 +284,8 @@ esperar(lembra, "portaria" in (lembra.resposta or "").lower(), "com memória, o 
            "E **memória livre é uma porta de entrada**: no NB02 vemos o cliente usá-la para gravar um direito que não tem."),
 
         md("## N1.8 — Recapitulação\n\n| Problema | Componente | Onde |\n|---|---|---|\n| O modelo inventa fatos | `ferramentas` | `rangoja/ferramentas.py` |\n| Decisão em prosa | `schema` | `rangoja/tipos.py` (`Decisao`) |\n| A conversa se perde | `estado` | `session.state` |\n| Contexto cheio de dados que não servem | `contexto_enxuto` | `ferramentas._resumo_enxuto` |\n| O agente não lembra do cliente | `memoria_livre` | `user:observacoes` |\n\n**Ponte para o NB02:** o agente agora age e lembra. Nada ainda o impede de agir mal."),
+        code('''# 🎯 EXPERIMENTE: tudo o que o NB01 acrescentou, de uma vez
+# comparar(v0_so_prompt, v1_agente)'''),
     ]
 
 
