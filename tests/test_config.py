@@ -24,6 +24,16 @@ def test_estado_da_chave(monkeypatch, resposta, inicio):
     assert config.estado_chave().startswith(inicio)
 
 
+def test_em_modo_vale_so_dentro_do_bloco(monkeypatch):
+    monkeypatch.setenv("RANGOJA_MODO", "live")
+    with config.em_modo("replay"):
+        assert config.modo() == "replay"
+    assert config.modo() == "live"
+    with pytest.raises(RuntimeError), config.em_modo("replay"):
+        raise RuntimeError
+    assert config.modo() == "live"
+
+
 def test_chave_recusada_nao_liga_live(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-teste")
     monkeypatch.setattr(config, "validar_chave", lambda chave, timeout=0: False)

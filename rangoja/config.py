@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import re
+from contextlib import contextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -27,6 +28,22 @@ def modo() -> str:
     if valor not in MODOS:
         raise ValueError(f"RANGOJA_MODO inválido: {valor!r}; use {MODOS}")
     return valor
+
+
+@contextmanager
+def em_modo(novo: str):
+    """Troca o modo só dentro do bloco. A N0.2 confere o replay mesmo com `live` no .env."""
+    if novo not in MODOS:
+        raise ValueError(f"modo inválido: {novo!r}; use {MODOS}")
+    anterior = os.environ.get("RANGOJA_MODO")
+    os.environ["RANGOJA_MODO"] = novo
+    try:
+        yield
+    finally:
+        if anterior is None:
+            os.environ.pop("RANGOJA_MODO", None)
+        else:
+            os.environ["RANGOJA_MODO"] = anterior
 
 
 def chave_disponivel() -> bool:

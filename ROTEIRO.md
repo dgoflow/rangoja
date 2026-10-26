@@ -76,8 +76,8 @@ Para instalar e rodar, veja o [`SETUP.md`](SETUP.md).
 ## NB00 — Ambiente
 
 **Pergunta:** meu ambiente funciona?
-Confere versões (Python, ADK 1.33.0), roda um atendimento só com gravações (sem rede e sem chave), oferece
-ligar o modo `live` com a sua chave (N0.3, opcional), mostra o Phoenix e executa a suíte de testes de orquestração na v3. Se N0.1, N0.2 e N0.6
+Confere versões (Python, ADK 1.33.0), roda um atendimento só com gravações (sem rede e sem chave, mesmo com `live` no
+`.env`), oferece ligar o modo `live` com a sua chave e compara a gravação com o modelo ao vivo (N0.3, opcional), mostra o Phoenix e executa a suíte de testes de orquestração na v3. Se N0.1, N0.2 e N0.6
 passaram, você está pronto.
 
 ## NB01 — Do prompt ao agente

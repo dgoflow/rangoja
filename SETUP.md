@@ -82,7 +82,8 @@ diferem.
 entrada é oculta e a chave é validada na hora, sem gastar tokens. O modo `live` liga para aquele
 notebook. A célula pergunta se você quer **salvar no `.env`**; responda `s` para os outros notebooks
 também a usarem (o arquivo fica fora do git, com permissão só para você). Se já houver chave, a N0.3
-só liga o modo `live`.
+só liga o modo `live`. A célula seguinte atende o mesmo caso da N0.2 ao vivo, para comparar com a
+gravação. A N0.2 roda sempre em `replay`, mesmo com `live` no `.env`: ela confere o caminho offline.
 
 **Pelo `.env`.** Copie o exemplo e preencha:
 

@@ -18,20 +18,22 @@ afirmar(sys.version_info >= (3, 11), "Python 3.11 ou mais novo")
 afirmar(meta.version("google-adk") == "1.33.0", "google-adk 1.33.0")'''),
         md("## N0.2 — Replay: respostas gravadas do modelo real\n\n"
            "Um atendimento inteiro, sem rede e sem chave. A resposta vem de uma gravação do gpt-4o-mini. Três coisas para conferir: "
-           "o status, se houve decisão estruturada e de onde veio a resposta."),
+           "o status, se houve decisão estruturada e de onde veio a resposta.\n\n"
+           "Esta seção roda **sempre em `replay`**, mesmo que o seu `.env` esteja em `live`: é o caminho que a sala usa, "
+           "e é ele que precisa funcionar. O modelo ao vivo aparece depois da N0.3."),
         code('''from IPython.display import Markdown, display
 
-a = atender_caso("C01", com=v0_so_prompt, replay="N1.1/falha")  # replay: a resposta gravada do gpt-4o-mini; live: o modelo responde agora
+with config.em_modo("replay"):  # vale só dentro do bloco: com live no .env, o resto do notebook continua ao vivo
+    a = atender_caso("C01", com=v0_so_prompt, replay="N1.1/falha")  # a resposta que o gpt-4o-mini deu quando gravamos
 texto = " ".join((a.resposta or "—").split())
 display(Markdown(
     f"**status:** {a.status}  \\n"
     f"**decisão:** {a.decisao or 'nenhuma: a resposta é só texto'}  \\n"
     f"**resposta:** {texto[:160]}{'…' if len(texto) > 160 else ''}  \\n"
-    f"**origem:** {'gravação do gpt-4o-mini, sem rede' if config.modo() == 'replay' else config.modelo_primario() + ' ao vivo'}"))'''),
-        code('''if config.modo() == "replay":
-    afirmar(a.erro is None and set(a.fonte) == {"gravacao"}, "o atendimento rodou só com a gravação, sem rede e sem chave")
-else:
-    afirmar(a.erro is None and "live" in a.fonte, "o atendimento rodou com o modelo ao vivo")'''),
+    f"**origem:** {'gravação do gpt-4o-mini, sem rede' if set(a.fonte) == {'gravacao'} else a.fonte}"))'''),
+        code('''afirmar(a.erro is None and set(a.fonte) == {"gravacao"}, "o atendimento rodou só com a gravação, sem rede e sem chave")
+if config.modo() == "live":
+    print("seu .env está em live: esta conferência foi em replay; o resto do notebook segue ao vivo")'''),
         md("## N0.3 — Chave de API (opcional)\n\nSem chave você acompanha tudo em `replay`. Para rodar ao vivo, execute a célula abaixo: se já houver chave (no `.env`), ela liga o modo `live`; se não houver, pede sua `OPENAI_API_KEY` com entrada oculta. Cada notebook tem seu próprio kernel: a chave vale só para este, a menos que você aceite **salvá-la no `.env`** (fora do git) quando a célula perguntar."),
         code('''if not config.chave_disponivel():
     print(config.diagnostico_chave())
@@ -40,6 +42,18 @@ elif config.modo() == "replay":
     print(config.usar_live())  # há chave: liga o modo ao vivo neste kernel
 print("modelo:", config.modelo_primario(), "| modo:", config.modo())
 print("chave de API:", config.estado_chave())'''),
+        md("Com o `live` ligado, a célula abaixo atende o mesmo cliente da N0.2, agora com o modelo respondendo. "
+           "Compare com a gravação: a resposta muda de uma execução para outra. Em `replay` ela não chama o modelo."),
+        code('''if config.modo() == "live":
+    ao_vivo = atender_caso("C01", com=v0_so_prompt)  # sem replay=: o modelo responde agora (gasta tokens)
+    texto_ao_vivo = " ".join((ao_vivo.resposta or "—").split())
+    display(Markdown(
+        f"**gravação (N0.2):** {texto[:160]}{'…' if len(texto) > 160 else ''}  \\n"
+        f"**ao vivo, agora:** {texto_ao_vivo[:160]}{'…' if len(texto_ao_vivo) > 160 else ''}  \\n"
+        f"**origem:** {config.modelo_primario()} ao vivo"))
+    esperar(ao_vivo, ao_vivo.erro is None and "live" in ao_vivo.fonte, "o mesmo atendimento rodou com o modelo ao vivo")
+else:
+    print("modo replay: nada a comparar. Com a chave, esta célula mostra o mesmo atendimento respondido ao vivo.")'''),
         md("## N0.4 — Observabilidade (Phoenix)\n\nO Phoenix vem na instalação. Com `RANGOJA_PHOENIX=off`, ou se a porta 6006 estiver ocupada, os notebooks mostram a mesma trajetória em texto (a `anatomia`), sem perda de conteúdo."),
         code('''print(observabilidade.ligar())
 print("interface:", observabilidade.url() or "indisponível")'''),
