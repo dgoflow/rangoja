@@ -1,73 +1,39 @@
 # RangoJá — do prompt ao agente robusto
 
-[![ci](https://github.com/dgoflow/rangoja/actions/workflows/ci.yml/badge.svg)](https://github.com/dgoflow/rangoja/actions/workflows/ci.yml)
+Um prompt bem escrito resolve muita coisa, até o dia em que precisa consultar um dado, executar uma ação ou
+resistir a um cliente insistente. Este repositório mostra, passo a passo, **como as capacidades se acumulam** entre
+o uso mais simples de um LLM (um prompt) e um agente em que se pode confiar.
 
-Material do workshop **Além do Prompt: Construindo Sistemas Agênticos Robustos** (AI Brasil
-Experience 2026). O caso é o atendimento de um app de delivery fictício, o RangoJá, construído
-com [Google ADK](https://google.github.io/adk-docs/) 1.33. Quatro versões do mesmo agente
-mostram, uma falha de cada vez, o que separa um prompt de um sistema que se pode confiar.
+O caso é sempre o mesmo: o atendimento do **RangoJá**, um app de delivery fictício. Um cliente reclama de um pedido,
+e cada notebook acrescenta uma camada ao atendente, mostrando primeiro a falha e depois a correção.
 
-| Versão | O que tem | Pergunta que responde |
+## A trilha
+
+| Notebook | Pergunta | O que entra |
 |---|---|---|
-| `v0` (`v0_so_prompt`) | só prompt, com a política colada | Funciona? |
-| `v1` (`v1_agente`) | ferramentas, saída estruturada, estado, contexto enxuto, memória do cliente | O que separa um prompt de um agente? |
-| `v2` (`v2_controlado`) | aprovação humana, guardrails, memória segura, sequência, categorias, contrato | Como impedir o que o agente não deve fazer? |
-| `v3` (`v3_robusto`) | erros estruturados, retry e fallback, limites, persistência, idempotência | O que acontece quando algo dá errado? |
+| [`alem_do_prompt`](alem_do_prompt.ipynb) | O que separa um prompt de um agente? | ferramentas (o loop ReAct), contrato de saída, regras em código |
+| `agente_controlado` *(em breve)* | Como impedir o que o agente não deve fazer? | aprovação humana, guardrails de entrada, sequência obrigatória, memória segura |
+| `agente_robusto` *(em breve)* | O que acontece quando algo dá errado? | traces, erros estruturados, retry e fallback, limites, idempotência |
+| `agente_avaliado` *(em breve)* | Como saber que ele funciona e continua funcionando? | testes de regra, casos golden, testes metamórficos, comparação entre versões |
 
-Cada capacidade é um **componente** pequeno com nome; uma versão é uma montagem deles
-(`v2_controlado.sem("contrato")`, `montar(v1_agente, com=["aprovacao"])`), e `comparar(antes, depois)`
-mostra o que muda de uma para a outra. O modelo propõe, o código autoriza. O desenho do agente da v3, com
-cada camada e a seção que a introduz, está no [ROTEIRO.md](ROTEIRO.md#como-o-agente-da-v3-roda).
+A ideia que atravessa todos: **o modelo propõe, o código autoriza.** A cada passo, uma garantia sai do prompt, que
+só pede, e passa para o código, que garante.
 
-## Notebooks
+Cada notebook é autossuficiente. Os dados, as ferramentas, o agente e as regras estão nas células, sem nenhum pacote
+escondido. De fora vêm só o [Google ADK](https://google.github.io/adk-docs/) e o pydantic.
 
-| Notebook | Tema |
-|---|---|
-| [`00_ambiente`](notebooks/00_ambiente.ipynb) | Meu ambiente funciona? |
-| [`01_do_prompt_ao_agente`](notebooks/01_do_prompt_ao_agente.ipynb) | v0 → v1: ferramentas, schema, estado, contexto, memória |
-| [`02_controle`](notebooks/02_controle.ipynb) | v1 → v2: aprovação, guardrails, memória segura, sequência, contrato |
-| [`03_falhas_e_observabilidade`](notebooks/03_falhas_e_observabilidade.ipynb) | v2 → v3: falhas, retry, limites, persistência, idempotência, traces |
-| [`04_testes_e_avaliacao`](notebooks/04_testes_e_avaliacao.ipynb) | testes por versão, avaliação, golden, testes metamórficos |
+## Como rodar
 
-Extras opcionais em [`notebooks/extras/`](notebooks/extras/): memória pesquisável, conversas longas, dados sintéticos e um texto sobre execução durável.
-
-Os notebooks são independentes entre si e cada seção roda sozinha. Estão com as saídas salvas
-e executam **sem chave de API**: as falhas vêm de gravações de um modelo real (gpt-4o-mini) ou,
-quando o modelo real não errou, de roteiros escritos à mão. As células dizem qual é qual. Com a sua
-chave, o modo `live` faz o modelo responder de verdade (veja o [SETUP.md](SETUP.md#usando-o-modelo-ao-vivo)).
-As seções do NB01 ao NB04 trazem células `# 🎯 EXPERIMENTE` com uma variação para você tentar.
-
-Para uma visão guiada do que cada notebook ensina, leia o [ROTEIRO.md](ROTEIRO.md).
-
-## Como começar
-
-Veja o [SETUP.md](SETUP.md). Em resumo, com o [uv](https://docs.astral.sh/uv/):
+Com o [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv sync --extra dev --extra live
-uv run python -m ipykernel install --user --name rangoja
-uv run jupyter lab notebooks/00_ambiente.ipynb
+uv sync
+uv run jupyter lab alem_do_prompt.ipynb
 ```
 
-Sem instalar nada: abra o repositório no GitHub Codespaces; o [`.devcontainer/`](.devcontainer/devcontainer.json)
-faz a instalação.
-
-## Estrutura
-
-```
-rangoja/      pacote: dados, política, ferramentas, agentes, versões, modelo, avaliação
-notebooks/    NB00–NB04 e as especificações (notebooks/specs)
-tests/        a mesma bateria roda contra qualquer versão: uv run pytest --versao v1
-evals/        golden dataset gerado dos casos
-scripts/      gravação, geração dos notebooks (os .ipynb são gerados: edite os scripts), verificação das gravações
-specs/        especificação do pacote
-palestra/     roteiro da apresentação (para quem apresenta)
-```
-
-## Resultados honestos
-
-O que foi medido com o modelo real, o que é roteiro e o que não foi implementado estão em
-[IMPLEMENTACAO.md](IMPLEMENTACAO.md). Os resultados com modelo real variam entre execuções.
+Os notebooks usam o gpt-4o-mini ao vivo e precisam de uma chave de API da OpenAI: copie `.env.example` para `.env`
+e preencha `OPENAI_API_KEY`. As respostas mudam entre execuções, o que faz parte do que se observa, e um notebook
+inteiro custa poucos centavos de tokens.
 
 ## Licença
 
