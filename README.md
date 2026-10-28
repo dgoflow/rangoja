@@ -12,7 +12,7 @@ e cada notebook acrescenta uma camada ao atendente, mostrando primeiro a falha e
 | Notebook | Pergunta | O que entra |
 |---|---|---|
 | [`alem_do_prompt`](alem_do_prompt.ipynb) | O que separa um prompt de um agente? | ferramentas (o loop ReAct), contrato de saída, regras em código |
-| `agente_controlado` *(em breve)* | Como impedir o que o agente não deve fazer? | aprovação humana, guardrails de entrada, sequência obrigatória, memória segura |
+| [`agente_controlado`](agente_controlado.ipynb) | Como impedir o que o agente não deve fazer? | menor privilégio, guardrails (entrada, ação, saída), humano no loop, memória de longo prazo |
 | `agente_robusto` *(em breve)* | O que acontece quando algo dá errado? | traces, erros estruturados, retry e fallback, limites, idempotência |
 | `agente_avaliado` *(em breve)* | Como saber que ele funciona e continua funcionando? | testes de regra, casos golden, testes metamórficos, comparação entre versões |
 
